@@ -1,0 +1,1700 @@
+# TPT Construction Design Document
+
+## Project Identity
+
+- Organization: `tpt-solutions`
+- Repository: `tpt-construction`
+- Crate prefix: `tpt-c-`
+- Primary language: Rust
+- License: `MIT OR Apache-2.0`
+- Related substrates:
+  - `tpt-math`
+  - `tpt-engineering`
+
+---
+
+## 1. Purpose
+
+`tpt-construction` is a modular Rust workspace providing reusable libraries for the construction industry.
+
+Its goal is to eventually provide crate coverage for at least 80% of the construction software domain, including:
+
+- BIM / IFC
+- estimating
+- quantity takeoff
+- scheduling
+- project controls
+- field management
+- civil / earthwork
+- equipment telemetry
+- safety
+- documents / contracts
+- facility management
+- digital twins
+- WebAssembly tooling
+
+The repository acts as the construction-specific layer on top of:
+
+```text
+tpt-math
+tpt-engineering
+tpt-construction
+```
+
+---
+
+## 2. Naming Rules
+
+The repository name is:
+
+```text
+tpt-construction
+```
+
+All published crates use the `tpt-c-` prefix.
+
+Examples:
+
+```text
+tpt-c-core
+tpt-c-bim
+tpt-c-ifc
+tpt-c-quantities
+tpt-c-estimating
+tpt-c-schedule
+tpt-c-field
+tpt-c-equipment
+tpt-c-wasm
+```
+
+Rust import names use underscores:
+
+```rust
+use tpt_c_core::Element;
+use tpt_c_ifc::IfcProject;
+use tpt_c_quantities::QuantityEngine;
+use tpt_c_estimating::EstimateBuilder;
+```
+
+---
+
+## 3. Licensing Strategy
+
+Each crate is released as:
+
+```toml
+license = "MIT OR Apache-2.0"
+```
+
+Use `OR`, not `AND`.
+
+Correct:
+
+```toml
+license = "MIT OR Apache-2.0"
+```
+
+Incorrect for dual licensing:
+
+```toml
+license = "MIT AND Apache-2.0"
+```
+
+The repository should contain:
+
+```text
+LICENSE-MIT
+LICENSE-APACHE
+```
+
+The README should state:
+
+```text
+Licensed under either of MIT or Apache-2.0 at your option.
+```
+
+---
+
+## 4. MIT Chain Policy
+
+Although the crates are dual-licensed as `MIT OR Apache-2.0`, the project should preserve an MIT-selectable dependency chain where possible.
+
+### Default policy
+
+Allowed dependencies:
+
+```text
+MIT
+MIT OR Apache-2.0
+Unicode-DFS-2016
+Unicode-3.0
+```
+
+Allowed with review:
+
+```text
+Apache-2.0
+BSD-2-Clause
+BSD-3-Clause
+ISC
+Zlib
+```
+
+Banned dependencies:
+
+```text
+GPL-2.0
+GPL-3.0
+LGPL-2.1
+LGPL-3.0
+AGPL-3.0
+MPL-2.0
+SSPL
+BUSL
+proprietary licenses
+```
+
+### Practical rule
+
+If a pure MIT chain is required, avoid Apache-only dependencies.
+
+If an Apache-only dependency is unavoidable, isolate it behind an optional Cargo feature and document that enabling it makes the resulting build subject to Apache-2.0 terms for that dependency.
+
+---
+
+## 5. Workspace Layout
+
+```text
+tpt-construction/
+├── Cargo.toml
+├── LICENSE-MIT
+├── LICENSE-APACHE
+├── README.md
+├── deny.toml
+├── rustfmt.toml
+├── clippy.toml
+├── .github/
+│   └── workflows/
+│       ├── ci.yml
+│       └── license.yml
+├── crates/
+│   ├── tpt-c-core/
+│   ├── tpt-c-ids/
+│   ├── tpt-c-units/
+│   ├── tpt-c-classification/
+│   ├── tpt-c-model/
+│   ├── tpt-c-geometry/
+│   ├── tpt-c-geo/
+│   ├── tpt-c-ifc/
+│   ├── tpt-c-bcf/
+│   ├── tpt-c-gltf/
+│   ├── tpt-c-las/
+│   ├── tpt-c-dxf/
+│   ├── tpt-c-csv/
+│   ├── tpt-c-xlsx/
+│   ├── tpt-c-quantities/
+│   ├── tpt-c-cost/
+│   ├── tpt-c-estimating/
+│   ├── tpt-c-schedule/
+│   ├── tpt-c-risk/
+│   ├── tpt-c-earned-value/
+│   ├── tpt-c-earthwork/
+│   ├── tpt-c-alignment/
+│   ├── tpt-c-field/
+│   ├── tpt-c-workflow/
+│   ├── tpt-c-safety/
+│   ├── tpt-c-equipment/
+│   ├── tpt-c-documents/
+│   ├── tpt-c-contracts/
+│   ├── tpt-c-payapps/
+│   ├── tpt-c-change/
+│   ├── tpt-c-sync/
+│   ├── tpt-c-events/
+│   ├── tpt-c-db/
+│   ├── tpt-c-api/
+│   ├── tpt-c-fm/
+│   ├── tpt-c-assets/
+│   ├── tpt-c-maintenance/
+│   ├── tpt-c-twin/
+│   ├── tpt-c-space/
+│   └── tpt-c-wasm/
+├── examples/
+│   ├── ifc-import/
+│   ├── quantity-takeoff/
+│   ├── estimate-export/
+│   ├── cpm-schedule/
+│   ├── earthwork-cut-fill/
+│   └── field-offline-sync/
+└── test-data/
+    ├── ifc/
+    ├── bcf/
+    ├── las/
+    ├── csv/
+    └── golden/
+```
+
+---
+
+## 6. Root Cargo.toml
+
+```toml
+[workspace]
+resolver = "2"
+members = [
+    "crates/*",
+    "examples/*",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/tpt-solutions/tpt-construction"
+authors = ["TPT Solutions"]
+
+[workspace.dependencies]
+tpt-c-core = { path = "crates/tpt-c-core", version = "0.1.0" }
+tpt-c-ids = { path = "crates/tpt-c-ids", version = "0.1.0" }
+tpt-c-units = { path = "crates/tpt-c-units", version = "0.1.0" }
+tpt-c-classification = { path = "crates/tpt-c-classification", version = "0.1.0" }
+tpt-c-model = { path = "crates/tpt-c-model", version = "0.1.0" }
+tpt-c-geometry = { path = "crates/tpt-c-geometry", version = "0.1.0" }
+tpt-c-geo = { path = "crates/tpt-c-geo", version = "0.1.0" }
+tpt-c-ifc = { path = "crates/tpt-c-ifc", version = "0.1.0" }
+tpt-c-bcf = { path = "crates/tpt-c-bcf", version = "0.1.0" }
+tpt-c-gltf = { path = "crates/tpt-c-gltf", version = "0.1.0" }
+tpt-c-las = { path = "crates/tpt-c-las", version = "0.1.0" }
+tpt-c-dxf = { path = "crates/tpt-c-dxf", version = "0.1.0" }
+tpt-c-csv = { path = "crates/tpt-c-csv", version = "0.1.0" }
+tpt-c-xlsx = { path = "crates/tpt-c-xlsx", version = "0.1.0" }
+tpt-c-quantities = { path = "crates/tpt-c-quantities", version = "0.1.0" }
+tpt-c-cost = { path = "crates/tpt-c-cost", version = "0.1.0" }
+tpt-c-estimating = { path = "crates/tpt-c-estimating", version = "0.1.0" }
+tpt-c-schedule = { path = "crates/tpt-c-schedule", version = "0.1.0" }
+tpt-c-risk = { path = "crates/tpt-c-risk", version = "0.1.0" }
+tpt-c-earned-value = { path = "crates/tpt-c-earned-value", version = "0.1.0" }
+tpt-c-earthwork = { path = "crates/tpt-c-earthwork", version = "0.1.0" }
+tpt-c-alignment = { path = "crates/tpt-c-alignment", version = "0.1.0" }
+tpt-c-field = { path = "crates/tpt-c-field", version = "0.1.0" }
+tpt-c-workflow = { path = "crates/tpt-c-workflow", version = "0.1.0" }
+tpt-c-safety = { path = "crates/tpt-c-safety", version = "0.1.0" }
+tpt-c-equipment = { path = "crates/tpt-c-equipment", version = "0.1.0" }
+tpt-c-documents = { path = "crates/tpt-c-documents", version = "0.1.0" }
+tpt-c-contracts = { path = "crates/tpt-c-contracts", version = "0.1.0" }
+tpt-c-payapps = { path = "crates/tpt-c-payapps", version = "0.1.0" }
+tpt-c-change = { path = "crates/tpt-c-change", version = "0.1.0" }
+tpt-c-sync = { path = "crates/tpt-c-sync", version = "0.1.0" }
+tpt-c-events = { path = "crates/tpt-c-events", version = "0.1.0" }
+tpt-c-db = { path = "crates/tpt-c-db", version = "0.1.0" }
+tpt-c-api = { path = "crates/tpt-c-api", version = "0.1.0" }
+tpt-c-fm = { path = "crates/tpt-c-fm", version = "0.1.0" }
+tpt-c-assets = { path = "crates/tpt-c-assets", version = "0.1.0" }
+tpt-c-maintenance = { path = "crates/tpt-c-maintenance", version = "0.1.0" }
+tpt-c-twin = { path = "crates/tpt-c-twin", version = "0.1.0" }
+tpt-c-space = { path = "crates/tpt-c-space", version = "0.1.0" }
+tpt-c-wasm = { path = "crates/tpt-c-wasm", version = "0.1.0" }
+
+# Local sibling repository overrides.
+# These should be removed or replaced when consuming published versions.
+[patch.crates-io]
+tpt-math-linalg-fixed = { path = "../tpt-math/crates/linalg-fixed" }
+tpt-math-prob-dist = { path = "../tpt-math/crates/prob-dist" }
+tpt-math-optimize-general = { path = "../tpt-math/crates/optimize-general" }
+tpt-engineering = { path = "../tpt-engineering" }
+```
+
+---
+
+## 7. Crate Cargo.toml Template
+
+Example for `crates/tpt-c-core/Cargo.toml`:
+
+```toml
+[package]
+name = "tpt-c-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Core domain types for TPT Construction."
+
+[lib]
+name = "tpt_c_core"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+```
+
+---
+
+## 8. Dependency Graph
+
+```text
+tpt-math
+    ↓
+tpt-engineering
+    ↓
+tpt-c-core
+    ↓
+tpt-c-units
+tpt-c-ids
+tpt-c-classification
+    ↓
+tpt-c-model
+tpt-c-geometry
+tpt-c-geo
+    ↓
+tpt-c-ifc
+tpt-c-bcf
+tpt-c-las
+tpt-c-dxf
+tpt-c-gltf
+    ↓
+tpt-c-quantities
+tpt-c-cost
+tpt-c-estimating
+tpt-c-schedule
+tpt-c-earthwork
+tpt-c-risk
+    ↓
+tpt-c-field
+tpt-c-workflow
+tpt-c-equipment
+tpt-c-safety
+tpt-c-documents
+tpt-c-contracts
+tpt-c-payapps
+    ↓
+tpt-c-fm
+tpt-c-assets
+tpt-c-maintenance
+tpt-c-twin
+tpt-c-space
+    ↓
+tpt-c-api
+tpt-c-db
+tpt-c-sync
+tpt-c-wasm
+```
+
+---
+
+## 9. Core Crates
+
+### `tpt-c-core`
+
+Purpose:
+
+- fundamental IDs
+- common traits
+- error types
+- project context
+- audit metadata
+
+Types:
+
+```rust
+ProjectId
+ContractId
+ModelId
+ElementId
+EstimateId
+ScheduleId
+ActivityId
+RFIId
+SubmittalId
+AssetId
+```
+
+---
+
+### `tpt-c-ids`
+
+Purpose:
+
+- deterministic IDs
+- UUIDv7 support
+- external ID mapping
+- source-system identifiers
+
+Use cases:
+
+- IFC GUID mapping
+- Revit element IDs
+- schedule activity IDs
+- cost code IDs
+- asset tags
+
+---
+
+### `tpt-c-units`
+
+Purpose:
+
+- construction units
+- conversions
+- rounding
+- precision
+- waste factors
+
+Examples:
+
+```text
+LF
+SF
+SY
+CY
+each
+hour
+day
+week
+kg
+ton
+m3
+m2
+```
+
+Construction-specific concerns:
+
+- bank cubic measure
+- loose cubic measure
+- compacted measure
+- formwork area
+- rebar weight
+- paint coverage
+- waste percentages
+
+---
+
+### `tpt-c-classification`
+
+Purpose:
+
+- construction classification systems
+- cost code mapping
+- specification mapping
+
+Supported systems:
+
+```text
+MasterFormat
+UniFormat
+OmniClass
+Uniclass
+Custom project classification
+```
+
+---
+
+### `tpt-c-model`
+
+Purpose:
+
+- neutral construction object model
+- independent from IFC, DXF, Revit, or other formats
+
+Types:
+
+```rust
+Project
+Site
+Building
+Storey
+Zone
+System
+Element
+Assembly
+MaterialLayer
+PropertySet
+QuantitySet
+```
+
+Key principle:
+
+```text
+File formats parse into tpt-c-model.
+Domain engines consume tpt-c-model.
+Domain engines should not depend directly on file formats.
+```
+
+---
+
+## 10. Geometry and Geospatial Crates
+
+### `tpt-c-geometry`
+
+Purpose:
+
+- points
+- vectors
+- meshes
+- solids
+- bounding boxes
+- spatial indexes
+- area calculation
+- volume calculation
+- surface extraction
+- clash detection primitives
+
+Depends on:
+
+```text
+tpt-math
+tpt-engineering
+```
+
+---
+
+### `tpt-c-geo`
+
+Purpose:
+
+- coordinate reference systems
+- local site coordinates
+- latitude / longitude
+- elevation
+- grids
+- datums
+- transformations
+
+Use cases:
+
+- surveying
+- site layout
+- machine control
+- drone data
+- civil alignment
+
+---
+
+### `tpt-c-earthwork`
+
+Purpose:
+
+- cut / fill calculation
+- mass haul diagrams
+- volume balancing
+- haul route optimization
+- shrink / swell factors
+
+Depends on:
+
+```text
+tpt-c-geo
+tpt-c-geometry
+tpt-math-optimize-general
+tpt-engineering
+```
+
+---
+
+### `tpt-c-alignment`
+
+Purpose:
+
+- horizontal alignments
+- vertical alignments
+- curves
+- superelevation
+- stationing
+- corridor modeling
+
+Use cases:
+
+- roads
+- rail
+- pipelines
+- utilities
+- subdivisions
+
+---
+
+## 11. File Format Crates
+
+### `tpt-c-ifc`
+
+Purpose:
+
+- parse IFC files
+- extract project structure
+- extract elements
+- extract property sets
+- extract quantities
+- extract geometry
+- map IFC to `tpt-c-model`
+
+Initial IFC scope:
+
+```text
+IfcProject
+IfcSite
+IfcBuilding
+IfcBuildingStorey
+IfcWall
+IfcSlab
+IfcColumn
+IfcBeam
+IfcDoor
+IfcWindow
+IfcSpace
+IfcPropertySet
+IfcQuantitySet
+```
+
+---
+
+### `tpt-c-bcf`
+
+Purpose:
+
+- BIM Collaboration Format
+- issue tracking
+- viewpoints
+- comments
+- statuses
+- assignments
+
+Use cases:
+
+- model coordination
+- clash issues
+- field issues
+- punch list items
+
+---
+
+### `tpt-c-gltf`
+
+Purpose:
+
+- export lightweight 3D geometry
+- convert construction models to web-ready meshes
+- preserve metadata mapping
+
+Use cases:
+
+- web viewers
+- coordination dashboards
+- digital twins
+
+---
+
+### `tpt-c-las`
+
+Purpose:
+
+- LAS / LAZ point cloud support
+- filtering
+- downsampling
+- classification
+- point cloud volumes
+
+Use cases:
+
+- drone surveys
+- laser scanning
+- as-built verification
+- progress tracking
+
+---
+
+### `tpt-c-dxf`
+
+Purpose:
+
+- parse DXF files
+- extract layers
+- extract lines
+- extract polylines
+- extract text
+- extract blocks
+
+Use cases:
+
+- 2D takeoff
+- legacy CAD interoperability
+- site plans
+- utility drawings
+
+---
+
+### `tpt-c-csv`
+
+Purpose:
+
+- import and export tabular construction data
+
+Use cases:
+
+- estimates
+- cost databases
+- schedules
+- equipment logs
+- daily reports
+
+---
+
+### `tpt-c-xlsx`
+
+Purpose:
+
+- Excel import and export
+
+Use cases:
+
+- estimator workflows
+- owner reports
+- bid summaries
+- budget exports
+
+---
+
+## 12. Estimating and Preconstruction Crates
+
+### `tpt-c-quantities`
+
+Purpose:
+
+- automated quantity takeoff
+- count
+- length
+- area
+- volume
+- weight
+- net vs gross
+- waste factors
+- manual overrides
+
+Example rules:
+
+```text
+Concrete volume = element volume
+Formwork area = exposed surface area
+Rebar weight = concrete volume * rebar factor
+Paint area = wall area - openings
+Flooring area = room area - door deductions
+```
+
+---
+
+### `tpt-c-cost`
+
+Purpose:
+
+- cost items
+- assemblies
+- resources
+- labor rates
+- material rates
+- equipment rates
+- subcontractor packages
+- overhead
+- profit
+- tax
+- escalation
+
+Types:
+
+```rust
+CostItem
+CostAssembly
+ResourceRate
+LineItem
+CostCode
+Budget
+Estimate
+```
+
+---
+
+### `tpt-c-estimating`
+
+Purpose:
+
+- estimate building
+- bid preparation
+- pricing workflows
+- estimate revisions
+- comparison between estimates
+- cost planning
+
+Key workflow:
+
+```text
+Model or drawing
+    ↓
+Quantities
+    ↓
+Cost items
+    ↓
+Line items
+    ↓
+Estimate
+    ↓
+Budget
+```
+
+---
+
+### `tpt-c-change`
+
+Purpose:
+
+- revisions
+- diffs
+- quantity deltas
+- cost deltas
+- change order tracking
+
+Example:
+
+```text
+Revision A concrete: 1000 CY
+Revision B concrete: 1050 CY
+Delta: +50 CY
+```
+
+---
+
+## 13. Scheduling and Project Controls Crates
+
+### `tpt-c-schedule`
+
+Purpose:
+
+- activities
+- relationships
+- constraints
+- calendars
+- durations
+- lag / lead
+- critical path method
+- float
+- baselines
+- actuals
+
+Relationship types:
+
+```text
+Finish-to-Start
+Start-to-Start
+Finish-to-Finish
+Start-to-Finish
+```
+
+Future extensions:
+
+```text
+Takt planning
+Line of Balance
+location-based scheduling
+resource leveling
+```
+
+---
+
+### `tpt-c-risk`
+
+Purpose:
+
+- schedule risk
+- cost risk
+- Monte Carlo simulation
+- weather risk
+- productivity uncertainty
+
+Depends on:
+
+```text
+tpt-math-prob-dist
+tpt-c-schedule
+tpt-c-estimating
+```
+
+---
+
+### `tpt-c-earned-value`
+
+Purpose:
+
+- Earned Value Management
+- SPI
+- CPI
+- TCPI
+- budgeted cost of work scheduled
+- budgeted cost of work performed
+- actual cost of work performed
+
+---
+
+## 14. Field Execution Crates
+
+### `tpt-c-field`
+
+Purpose:
+
+- daily logs
+- field reports
+- work records
+- manpower tracking
+- weather records
+- site observations
+
+---
+
+### `tpt-c-workflow`
+
+Purpose:
+
+- approval workflows
+- state machines
+- responsibilities
+- due dates
+- routing
+
+Workflows:
+
+```text
+RFI
+Submittal
+Punch List
+Issue
+Change Order
+Notice
+Transmittal
+```
+
+---
+
+### `tpt-c-documents`
+
+Purpose:
+
+- documents
+- drawings
+- specifications
+- revisions
+- transmittals
+- document control
+
+---
+
+### `tpt-c-contracts`
+
+Purpose:
+
+- contracts
+- contract items
+- responsibilities
+- notices
+- claims
+- compliance events
+
+---
+
+### `tpt-c-payapps`
+
+Purpose:
+
+- progress claims
+- payment applications
+- schedule of values
+- retention
+- approvals
+- certified amounts
+
+---
+
+### `tpt-c-safety`
+
+Purpose:
+
+- incidents
+- near misses
+- safety observations
+- toolbox talks
+- inspections
+- compliance checklists
+
+---
+
+## 15. Equipment and IoT Crates
+
+### `tpt-c-equipment`
+
+Purpose:
+
+- heavy equipment registry
+- utilization tracking
+- fuel tracking
+- idle time
+- maintenance triggers
+- telematics events
+
+Possible inputs:
+
+```text
+J1939 CAN bus
+OEM telematics APIs
+GPS data
+fuel logs
+maintenance logs
+```
+
+---
+
+## 16. Application Infrastructure Crates
+
+### `tpt-c-sync`
+
+Purpose:
+
+- offline-first synchronization
+- local storage
+- conflict resolution
+- CRDTs
+- site connectivity resilience
+
+Use cases:
+
+- mobile field apps
+- remote sites
+- basements
+- civil projects with poor connectivity
+
+---
+
+### `tpt-c-events`
+
+Purpose:
+
+- domain events
+- audit trail
+- event sourcing support
+- projections
+- replay
+
+Example events:
+
+```text
+ModelImported
+QuantityAdjusted
+CostItemApplied
+EstimateApproved
+ScheduleUpdated
+RFICreated
+RFIAnswered
+SubmittalApproved
+PaymentApplicationSubmitted
+```
+
+---
+
+### `tpt-c-db`
+
+Purpose:
+
+- persistence patterns
+- PostgreSQL support
+- SQLite local storage
+- migrations
+- repositories
+
+---
+
+### `tpt-c-api`
+
+Purpose:
+
+- REST or GraphQL API models
+- authentication patterns
+- authorization patterns
+- project access control
+- webhooks
+- audit logging
+
+---
+
+## 17. Facility Management and Digital Twin Crates
+
+### `tpt-c-fm`
+
+Purpose:
+
+- facility management
+- COBie support
+- handover data
+- asset registers
+- spaces and systems
+
+---
+
+### `tpt-c-assets`
+
+Purpose:
+
+- asset lifecycle
+- warranties
+- serial numbers
+- replacements
+- maintenance schedules
+
+---
+
+### `tpt-c-maintenance`
+
+Purpose:
+
+- preventive maintenance
+- corrective maintenance
+- work orders
+- service history
+
+---
+
+### `tpt-c-twin`
+
+Purpose:
+
+- digital twin state
+- sensor mapping
+- live telemetry
+- spatial asset context
+
+Depends on:
+
+```text
+tpt-c-model
+tpt-c-equipment
+tpt-c-assets
+tpt-c-fm
+```
+
+---
+
+### `tpt-c-space`
+
+Purpose:
+
+- spaces
+- occupancy
+- leases
+- areas
+- space planning
+- space utilization
+
+---
+
+## 18. WebAssembly Crate
+
+### `tpt-c-wasm`
+
+Purpose:
+
+- compile construction engines to WASM
+- expose safe APIs to JavaScript
+- parse models in the browser
+- compute quantities in the browser
+- compute schedules in the browser
+- generate viewer data in the browser
+
+Target features:
+
+```text
+IFC parsing
+quantity takeoff
+CPM scheduling
+clash detection preparation
+model simplification
+glTF export
+```
+
+---
+
+## 19. Industry Coverage Map
+
+The crate set is designed to cover at least 80% of common construction software needs.
+
+| Industry Domain | Covered By |
+|---|---|
+| BIM / model coordination | `tpt-c-ifc`, `tpt-c-bcf`, `tpt-c-gltf`, `tpt-c-model` |
+| Quantity takeoff | `tpt-c-quantities`, `tpt-c-geometry`, `tpt-c-model` |
+| Estimating | `tpt-c-cost`, `tpt-c-estimating`, `tpt-c-classification` |
+| Cost control | `tpt-c-cost`, `tpt-c-earned-value`, `tpt-c-change` |
+| Scheduling | `tpt-c-schedule`, `tpt-c-risk`, `tpt-c-earned-value` |
+| Field management | `tpt-c-field`, `tpt-c-workflow`, `tpt-c-documents` |
+| RFIs / submittals | `tpt-c-workflow`, `tpt-c-documents` |
+| Contracts | `tpt-c-contracts`, `tpt-c-payapps` |
+| Payment applications | `tpt-c-payapps` |
+| Safety | `tpt-c-safety`, `tpt-c-field` |
+| Civil / earthwork | `tpt-c-geo`, `tpt-c-earthwork`, `tpt-c-alignment` |
+| Survey / point clouds | `tpt-c-las`, `tpt-c-geo` |
+| Equipment / IoT | `tpt-c-equipment`, `tpt-c-twin` |
+| Facility management | `tpt-c-fm`, `tpt-c-assets`, `tpt-c-maintenance` |
+| Digital twins | `tpt-c-twin`, `tpt-c-equipment`, `tpt-c-assets` |
+| Offline field apps | `tpt-c-sync`, `tpt-c-db` |
+| Web tooling | `tpt-c-wasm`, `tpt-c-gltf` |
+| Reporting / exports | `tpt-c-csv`, `tpt-c-xlsx` |
+
+---
+
+## 20. Technical Principles
+
+### Pure core domain crates
+
+Core domain crates should avoid IO where possible.
+
+They should be:
+
+```text
+deterministic
+testable
+serializable
+platform-independent
+```
+
+---
+
+### Neutral model first
+
+File formats should not leak into domain engines.
+
+Bad:
+
+```text
+Estimating depends directly on IFC.
+```
+
+Good:
+
+```text
+IFC parses into tpt-c-model.
+Estimating consumes tpt-c-model.
+```
+
+---
+
+### Event-first auditability
+
+Construction projects require audit trails.
+
+Important changes should be representable as events.
+
+Examples:
+
+```text
+QuantityAdjusted
+CostItemApplied
+ScheduleRebaselined
+RFIAnswered
+SubmittalRejected
+PaymentApplicationCertified
+```
+
+---
+
+### Offline-first field support
+
+Field crates should assume poor connectivity.
+
+Design for:
+
+```text
+local SQLite storage
+CRDT merge
+eventual sync
+conflict resolution
+retry queues
+```
+
+---
+
+### WebAssembly as a first-class target
+
+Rust construction engines should be compilable to WASM for browser use.
+
+Primary candidates:
+
+```text
+tpt-c-ifc
+tpt-c-quantities
+tpt-c-cost
+tpt-c-schedule
+tpt-c-earthwork
+tpt-c-gltf
+```
+
+---
+
+## 21. License Enforcement With cargo-deny
+
+Example `deny.toml` for a permissive chain:
+
+```toml
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+]
+
+copyleft = "deny"
+unlicensed = "deny"
+
+[[licenses.clarify]]
+name = "ring"
+expression = "MIT AND ISC AND OpenSSL"
+license-files = [
+    { path = "LICENSE", hash = 0xbd0eed23 },
+]
+```
+
+If you want a stricter MIT-selectable chain, use:
+
+```toml
+[licenses]
+allow = [
+    "MIT",
+    "Unicode-DFS-2016",
+    "Unicode-3.0",
+]
+
+copyleft = "deny"
+unlicensed = "deny"
+```
+
+Then manually review any dependency that is dual-licensed or Apache-only.
+
+---
+
+## 22. Recommended CI Checks
+
+The CI pipeline should run:
+
+```bash
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --workspace
+cargo deny check licenses
+cargo deny check bans
+cargo deny check sources
+```
+
+Optional:
+
+```bash
+cargo doc --workspace --no-deps
+cargo hack check --feature-powerset
+```
+
+---
+
+## 23. Phased Delivery Plan
+
+### Phase 1: Foundation
+
+Crates:
+
+```text
+tpt-c-core
+tpt-c-ids
+tpt-c-units
+tpt-c-classification
+tpt-c-model
+```
+
+Goal:
+
+```text
+Establish core construction domain types.
+```
+
+---
+
+### Phase 2: Geometry and Formats
+
+Crates:
+
+```text
+tpt-c-geometry
+tpt-c-geo
+tpt-c-ifc
+tpt-c-bcf
+tpt-c-gltf
+```
+
+Goal:
+
+```text
+Import BIM data and convert it into a neutral model.
+```
+
+---
+
+### Phase 3: Estimating MVP
+
+Crates:
+
+```text
+tpt-c-quantities
+tpt-c-cost
+tpt-c-estimating
+tpt-c-csv
+tpt-c-xlsx
+```
+
+Goal:
+
+```text
+Import a model, calculate quantities, and produce an estimate.
+```
+
+---
+
+### Phase 4: Scheduling
+
+Crates:
+
+```text
+tpt-c-schedule
+tpt-c-risk
+tpt-c-earned-value
+```
+
+Goal:
+
+```text
+Support CPM scheduling, risk analysis, and project controls.
+```
+
+---
+
+### Phase 5: Civil and Earthwork
+
+Crates:
+
+```text
+tpt-c-earthwork
+tpt-c-alignment
+tpt-c-las
+```
+
+Goal:
+
+```text
+Support civil construction, surveying, and site work.
+```
+
+---
+
+### Phase 6: Field Execution
+
+Crates:
+
+```text
+tpt-c-field
+tpt-c-workflow
+tpt-c-documents
+tpt-c-contracts
+tpt-c-payapps
+tpt-c-safety
+```
+
+Goal:
+
+```text
+Support daily site operations and project administration.
+```
+
+---
+
+### Phase 7: Equipment and Sync
+
+Crates:
+
+```text
+tpt-c-equipment
+tpt-c-sync
+tpt-c-events
+tpt-c-db
+```
+
+Goal:
+
+```text
+Support offline field apps and equipment telemetry.
+```
+
+---
+
+### Phase 8: Facility Management and Digital Twins
+
+Crates:
+
+```text
+tpt-c-fm
+tpt-c-assets
+tpt-c-maintenance
+tpt-c-twin
+tpt-c-space
+```
+
+Goal:
+
+```text
+Support post-construction operations and asset lifecycle management.
+```
+
+---
+
+### Phase 9: Web Platform Enablement
+
+Crates:
+
+```text
+tpt-c-wasm
+tpt-c-api
+```
+
+Goal:
+
+```text
+Enable browser-based construction tools and platform APIs.
+```
+
+---
+
+## 24. First Vertical Slice
+
+The first useful product slice should be:
+
+```text
+Import IFC file
+    ↓
+Extract elements
+    ↓
+Extract properties and quantities
+    ↓
+Apply classification
+    ↓
+Apply cost items
+    ↓
+Export estimate
+```
+
+Minimum crates required:
+
+```text
+tpt-c-core
+tpt-c-units
+tpt-c-classification
+tpt-c-model
+tpt-c-ifc
+tpt-c-quantities
+tpt-c-cost
+tpt-c-estimating
+tpt-c-csv
+tpt-c-xlsx
+```
+
+Example CLI command:
+
+```bash
+tpt-c estimate model.ifc --cost-db rates.csv --output estimate.xlsx
+```
+
+---
+
+## 25. README License Section Template
+
+```markdown
+## License
+
+Licensed under either of
+
+- MIT license
+- Apache License, Version 2.0
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this repository shall be dual licensed as MIT OR Apache-2.0,
+without any additional terms or conditions.
+```
+
+---
+
+## 26. Source File Header Template
+
+```rust
+// Copyright (c) TPT Solutions
+// SPDX-License-Identifier: MIT OR Apache-2.0
+```
+
+---
+
+## 27. Contribution License Agreement Text
+
+```text
+By submitting a contribution to this repository, you agree that your
+contribution is licensed under either the MIT license or the Apache
+License, Version 2.0, at the option of the project maintainers and
+downstream users.
+```
+
+---
+
+## 28. Summary
+
+`tpt-construction` is the construction domain layer of the TPT open source ecosystem.
+
+It uses:
+
+```text
+tpt-math
+```
+
+for numeric computation,
+
+```text
+tpt-engineering
+```
+
+for applied engineering primitives,
+
+and provides:
+
+```text
+tpt-c-*
+```
+
+crates for construction software.
+
+The repository remains:
+
+```text
+tpt-construction
+```
+
+The crates use:
+
+```text
+tpt-c-
+```
+
+The public license is:
+
+```text
+MIT OR Apache-2.0
+```
+
+The dependency policy should preserve an MIT-selectable chain where practical, avoid copyleft dependencies, and isolate any unavoidable Apache-only dependencies behind optional features.
+
+Any apache only licenses, we will create an alternative from scratch.
