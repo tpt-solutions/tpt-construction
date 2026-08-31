@@ -159,7 +159,7 @@ impl Station {
     /// Station formatted as `km+00.0`.
     pub fn format(&self) -> String {
         let k = self.0 / 1000;
-        let r = self.0 % 1000;
+        let r = (self.0 % 1000) as f64;
         format!("{k}+{r:.1}")
     }
 }
