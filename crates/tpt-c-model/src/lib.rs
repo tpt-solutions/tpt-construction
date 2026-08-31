@@ -349,7 +349,10 @@ impl Project {
     }
 
     /// All elements of a given category.
-    pub fn elements_of_category<'a>(&'a self, category: &'a str) -> impl Iterator<Item = &'a Element> {
+    pub fn elements_of_category<'a>(
+        &'a self,
+        category: &'a str,
+    ) -> impl Iterator<Item = &'a Element> {
         self.elements.iter().filter(move |e| e.category == category)
     }
 
@@ -367,9 +370,13 @@ mod tests {
 
     #[test]
     fn build_and_query_project() {
-        let mut p = Project::new(ProjectId::nil(), "Demo").with_default_system(ClassificationSystem::UniFormat);
+        let mut p = Project::new(ProjectId::nil(), "Demo")
+            .with_default_system(ClassificationSystem::UniFormat);
         let e = Element::new(IdFactory::element(), "W1", "Wall")
-            .classified(Classification::new(ClassificationSystem::MasterFormat, "03 30 00"))
+            .classified(Classification::new(
+                ClassificationSystem::MasterFormat,
+                "03 30 00",
+            ))
             .with_quantity_set(
                 QuantitySet::new("BaseQuantities")
                     .with("Length", Quantity::Length(Length::from_feet(20.0))),
@@ -378,6 +385,9 @@ mod tests {
         assert_eq!(p.element_count(), 1);
         assert_eq!(p.elements_of_category("Wall").count(), 1);
         let el = p.elements.first().unwrap();
-        assert_eq!(el.quantity_sets[0].quantities[0].quantity, Quantity::Length(Length::from_feet(20.0)));
+        assert_eq!(
+            el.quantity_sets[0].quantities[0].quantity,
+            Quantity::Length(Length::from_feet(20.0))
+        );
     }
 }

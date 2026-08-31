@@ -168,7 +168,11 @@ pub struct DailyLog {
 
 impl DailyLog {
     /// Create a new daily log for `date` by `created_by`.
-    pub fn new(project_id: ProjectId, date: impl Into<String>, created_by: impl Into<String>) -> Self {
+    pub fn new(
+        project_id: ProjectId,
+        date: impl Into<String>,
+        created_by: impl Into<String>,
+    ) -> Self {
         let actor: String = created_by.into();
         Self {
             id: DailyLogId::from_uuid(Uuid::now_v7()),
@@ -193,7 +197,8 @@ impl DailyLog {
 
     /// Record manpower for a trade.
     pub fn add_manpower(&mut self, trade: impl Into<String>, headcount: u32, hours: f64) {
-        self.manpower.push(ManpowerRecord::new(trade, headcount, hours));
+        self.manpower
+            .push(ManpowerRecord::new(trade, headcount, hours));
     }
 
     /// Record a work entry.

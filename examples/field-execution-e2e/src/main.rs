@@ -8,15 +8,18 @@
 //! with `cargo run --example field-execution-e2e` or
 //! `cargo test --example field-execution-e2e`.
 
+use tpt_c_contracts::{Amount, ClaimKind, Contract};
 use tpt_c_core::{AuditMeta, ProjectId};
-use tpt_c_field::{DailyLog, SiteObservation, ObservationCategory, Severity, WeatherCondition, WeatherRecord, WorkRecord};
-use tpt_c_ids::{DocumentId, NoticeId, SafetyIncidentId};
-use tpt_c_workflow::{RfiWorkflow, RfiState, TransmittalState};
-use tpt_c_documents::{DocumentRegister, DocumentType};
-use tpt_c_contracts::{Contract, Amount, ClaimKind};
-use tpt_c_payapps::{PaymentApplication, PaymentApplicationStatus, ScheduleOfValues};
 use tpt_c_cost::Money;
-use tpt_c_safety::{Incident, Severity as SafetySeverity, IncidentStatus};
+use tpt_c_documents::{DocumentRegister, DocumentType};
+use tpt_c_field::{
+    DailyLog, ObservationCategory, Severity, SiteObservation, WeatherCondition, WeatherRecord,
+    WorkRecord,
+};
+use tpt_c_ids::{DocumentId, NoticeId, SafetyIncidentId};
+use tpt_c_payapps::{PaymentApplication, PaymentApplicationStatus, ScheduleOfValues};
+use tpt_c_safety::{Incident, IncidentStatus, Severity as SafetySeverity};
+use tpt_c_workflow::{RfiState, RfiWorkflow, TransmittalState};
 
 fn at(who: &str) -> AuditMeta {
     AuditMeta::new(who, "2026-03-01T00:00:00Z")
@@ -62,19 +65,29 @@ fn run() -> Result<(), String> {
     let tx = reg.issue_transmittal("TX-0042", vec![doc.id]);
     let mut tx = tx;
     tx.workflow.send(at("pm")).map_err(|e| e.to_string())?;
-    assert_eq!(tx.workflow.state(), TransmittalState::Sent, "transmittal sent");
+    assert_eq!(
+        tx.workflow.state(),
+        TransmittalState::Sent,
+        "transmittal sent"
+    );
 
     // 4. The contract carries a notice and a claim tied to the RFI.
     let mut contract = Contract::new(uuid_contract(), "GC Prime");
     contract.add_item("Concrete works", Amount::new(500_000.0, "USD"));
-    let mut notice = tpt_c_contracts::Notice::new(NoticeId::from_uuid(uuid_now()), "Notice of delay");
+    let mut notice =
+        tpt_c_contracts::Notice::new(NoticeId::from_uuid(uuid_now()), "Notice of delay");
     notice.acknowledge(at("owner"));
     assert_eq!(notice.state(), tpt_c_workflow::NoticeState::Acknowledged);
-    let _claim = tpt_c_contracts::Claim::new(uuid_claim(), ClaimKind::Delay, "Weather delay impact");
+    let _claim =
+        tpt_c_contracts::Claim::new(uuid_claim(), ClaimKind::Delay, "Weather delay impact");
 
     // 5. A payment application draws down against a schedule of values.
     let mut sov = ScheduleOfValues::new("SOV-1");
-    sov.add_item("03 30 00", "Cast-in-place concrete", Money::new(500_000.0, "USD"));
+    sov.add_item(
+        "03 30 00",
+        "Cast-in-place concrete",
+        Money::new(500_000.0, "USD"),
+    );
     let mut app = PaymentApplication::new(uuid_pa(), "2026-03", sov.total()).with_sov("SOV-1");
     app.set_work_completed(Money::new(120_000.0, "USD"));
     app.set_retainage(0.05).map_err(|e| e.to_string())?;
@@ -82,12 +95,20 @@ fn run() -> Result<(), String> {
     app.begin_review();
     app.approve("owner".to_string());
     app.certify();
-    assert_eq!(app.status, PaymentApplicationStatus::Certified, "pay app certified");
+    assert_eq!(
+        app.status,
+        PaymentApplicationStatus::Certified,
+        "pay app certified"
+    );
     // gross 120k - retainage 6k - prior 0 => 114k certified.
     assert_eq!(app.net_claim().amount(), 114_000.0, "net claim");
 
     // 6. A safety incident is recorded and investigated.
-    let mut incident = Incident::new(SafetyIncidentId::from_uuid(uuid_now()), "Near-miss with forklift", SafetySeverity::Medium);
+    let mut incident = Incident::new(
+        SafetyIncidentId::from_uuid(uuid_now()),
+        "Near-miss with forklift",
+        SafetySeverity::Medium,
+    );
     incident.begin_investigation();
     assert_eq!(incident.status, IncidentStatus::Investigating);
 

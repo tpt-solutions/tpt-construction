@@ -170,7 +170,10 @@ pub fn export(project: &Project) -> GltfDocument {
         bytes.extend_from_slice(&i.to_le_bytes());
     }
 
-    let buffer_uri = format!("data:application/octet-stream;base64,{}", base64_encode(&bytes));
+    let buffer_uri = format!(
+        "data:application/octet-stream;base64,{}",
+        base64_encode(&bytes)
+    );
 
     let mut nodes = Vec::new();
     for (idx, element) in project.elements.iter().enumerate() {
@@ -347,9 +350,10 @@ mod tests {
                     .with("Height", PropertyValue::Number(3.0))
                     .with("Width", PropertyValue::Number(0.3)),
             )
-            .with_quantity_set(
-                QuantitySet::new("Q").with("Length", Quantity::Length(tpt_c_units::Length::from_meters(10.0))),
-            );
+            .with_quantity_set(QuantitySet::new("Q").with(
+                "Length",
+                Quantity::Length(tpt_c_units::Length::from_meters(10.0)),
+            ));
         p.add_element(e);
 
         let doc = export(&p);

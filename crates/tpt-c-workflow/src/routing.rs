@@ -138,9 +138,15 @@ mod chrono_like {
     /// parsing is out of scope; we require `YYYY-MM-DD` followed by `T` and a
     /// time component, optionally with a `Z` or offset.
     pub fn parse_rfc3339(s: &str) -> Result<Parsed, RoutingError> {
-        let (date, time) = s.split_once('T').ok_or_else(|| RoutingError::InvalidDueDate(s.into()))?;
+        let (date, time) = s
+            .split_once('T')
+            .ok_or_else(|| RoutingError::InvalidDueDate(s.into()))?;
         let date_ok = date.len() == 10 && date.bytes().all(|b| b.is_ascii_digit() || b == b'-');
-        let start = time.trim_end_matches('Z').split(['+', '-']).next().unwrap_or("");
+        let start = time
+            .trim_end_matches('Z')
+            .split(['+', '-'])
+            .next()
+            .unwrap_or("");
         let time_ok = start.len() >= 8 && start.bytes().all(|b| b.is_ascii_digit() || b == b':');
         if date_ok && time_ok {
             Ok(Parsed { raw: s.into() })

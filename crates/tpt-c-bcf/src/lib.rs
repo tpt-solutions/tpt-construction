@@ -185,12 +185,10 @@ impl BcfMarkup {
     /// Parse a BCF markup document from XML.
     pub fn from_xml(input: &str) -> Result<Self, BcfError> {
         let root = XmlParser::parse(input)?;
-        if root.name.to_ascii_uppercase() != "MARKUP" {
+        if !root.name.eq_ignore_ascii_case("MARKUP") {
             return Err(BcfError::Missing("Markup root"));
         }
-        let topic_el = root
-            .child("Topic")
-            .ok_or(BcfError::Missing("Topic"))?;
+        let topic_el = root.child("Topic").ok_or(BcfError::Missing("Topic"))?;
         let guid = topic_el
             .attr("Guid")
             .ok_or(BcfError::Missing("Topic Guid"))?
@@ -199,11 +197,7 @@ impl BcfMarkup {
             .child_text("Title")
             .ok_or(BcfError::Missing("Topic Title"))?
             .to_string();
-        let status = TopicStatus::from_str(
-            topic_el
-                .attr("TopicStatus")
-                .unwrap_or("open"),
-        );
+        let status = TopicStatus::from_str(topic_el.attr("TopicStatus").unwrap_or("open"));
 
         let topic = BcfTopic {
             guid,
@@ -213,7 +207,7 @@ impl BcfMarkup {
             priority: topic_el
                 .attr("TopicPriority")
                 .or_else(|| topic_el.child_text("Priority"))
-                .map(|s| TopicPriority::from_str(s)),
+                .map(TopicPriority::from_str),
             created_by: topic_el.child_text("CreatedBy").map(str::to_string),
             creation_date: topic_el.child_text("CreationDate").map(str::to_string),
             assigned_to: topic_el.child_text("AssignedTo").map(str::to_string),
@@ -223,7 +217,10 @@ impl BcfMarkup {
 
         let mut comments = Vec::new();
         for c in root.children("Comment") {
-            let guid = c.attr("Guid").ok_or(BcfError::Missing("Comment Guid"))?.to_string();
+            let guid = c
+                .attr("Guid")
+                .ok_or(BcfError::Missing("Comment Guid"))?
+                .to_string();
             let author = c
                 .attr("Author")
                 .or_else(|| c.child_text("Author"))
@@ -252,7 +249,10 @@ impl BcfMarkup {
         let mut viewpoints = Vec::new();
         if let Some(vps) = root.child("Viewpoints") {
             for vp in vps.children("Viewpoint") {
-                let guid = vp.attr("Guid").ok_or(BcfError::Missing("Viewpoint Guid"))?.to_string();
+                let guid = vp
+                    .attr("Guid")
+                    .ok_or(BcfError::Missing("Viewpoint Guid"))?
+                    .to_string();
                 viewpoints.push(BcfViewpoint {
                     guid,
                     description: vp.child_text("Description").map(str::to_string),
@@ -371,7 +371,9 @@ impl XmlEl {
         self.attrs.get(name).map(String::as_str)
     }
     fn child(&self, name: &str) -> Option<&XmlEl> {
-        self.children.iter().find(|c| c.name.eq_ignore_ascii_case(name))
+        self.children
+            .iter()
+            .find(|c| c.name.eq_ignore_ascii_case(name))
     }
     fn children(&self, name: &str) -> Vec<&XmlEl> {
         self.children
@@ -470,7 +472,10 @@ impl<'a> XmlParser<'a> {
                 self.pos += 2;
                 let close = self.parse_name()?;
                 if close != name {
-                    return Err(BcfError::Xml(self.pos, format!("mismatched close tag {close}")));
+                    return Err(BcfError::Xml(
+                        self.pos,
+                        format!("mismatched close tag {close}"),
+                    ));
                 }
                 self.skip_ws();
                 if self.peek(0) != Some('>') {
@@ -546,7 +551,9 @@ impl<'a> XmlParser<'a> {
         while self.pos < self.s.len() && self.peek(0) != Some('<') {
             self.pos += 1;
         }
-        Ok(unescape(&self.s[start..self.pos].iter().collect::<String>()))
+        Ok(unescape(
+            &self.s[start..self.pos].iter().collect::<String>(),
+        ))
     }
 }
 
@@ -614,7 +621,8 @@ mod tests {
 
     #[test]
     fn fixture_file() {
-        let m = BcfMarkup::from_xml(include_str!("../../../test-data/bcf/markup.bcf")).expect("fixture");
+        let m = BcfMarkup::from_xml(include_str!("../../../test-data/bcf/markup.bcf"))
+            .expect("fixture");
         assert!(!m.topic.guid.is_empty());
     }
 }

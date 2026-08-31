@@ -336,13 +336,24 @@ impl Mesh {
 
     /// Total surface area of all triangles.
     pub fn area(&self) -> Area {
-        Area::from_square_meters(self.iter_triangles().map(|t| t.area().square_meters()).sum())
+        Area::from_square_meters(
+            self.iter_triangles()
+                .map(|t| t.area().square_meters())
+                .sum(),
+        )
     }
 
     /// Surface area of a single face (index).
     pub fn triangle_area(&self, index: usize) -> Option<Area> {
         let t = self.triangles.get(index)?;
-        Some(Triangle::new(self.vertices[t[0]], self.vertices[t[1]], self.vertices[t[2]]).area())
+        Some(
+            Triangle::new(
+                self.vertices[t[0]],
+                self.vertices[t[1]],
+                self.vertices[t[2]],
+            )
+            .area(),
+        )
     }
 
     /// Signed volume of a closed manifold mesh about the origin.

@@ -1,0 +1,17 @@
+[package]
+name = "tpt-c-earthwork"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Earthwork volumes, shrink/swell, mass haul, and volume balancing for construction"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+tpt-c-geo.workspace = true
+tpt-c-geometry.workspace = true
+tpt-c-units.workspace = true

@@ -106,6 +106,42 @@ define_id!(
     /// Identifies a physical asset (FM / equipment).
     AssetId
 );
+define_id!(
+    /// Identifies a claim against a contract.
+    ClaimId
+);
+define_id!(
+    /// Identifies a line item within a contract.
+    ContractItemId
+);
+define_id!(
+    /// Identifies a document or drawing revision.
+    DocumentId
+);
+define_id!(
+    /// Identifies an issue tracked in the workflow system.
+    IssueId
+);
+define_id!(
+    /// Identifies a formal notice (e.g. notice to proceed).
+    NoticeId
+);
+define_id!(
+    /// Identifies a payment application / progress claim.
+    PaymentApplicationId
+);
+define_id!(
+    /// Identifies a punch list item.
+    PunchListId
+);
+define_id!(
+    /// Identifies a safety incident record.
+    SafetyIncidentId
+);
+define_id!(
+    /// Identifies a transmittal document package.
+    TransmittalId
+);
 
 /// Errors shared across the construction domain crates.
 #[derive(Debug, Error, PartialEq, Eq)]

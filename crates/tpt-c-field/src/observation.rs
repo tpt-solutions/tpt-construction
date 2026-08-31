@@ -133,7 +133,11 @@ mod tests {
 
     #[test]
     fn review_then_resolve() {
-        let mut o = SiteObservation::new(ObservationCategory::Quality, "Honeycombing", Severity::Medium);
+        let mut o = SiteObservation::new(
+            ObservationCategory::Quality,
+            "Honeycombing",
+            Severity::Medium,
+        );
         o.review(AuditMeta::new("qa", "2026-01-01T00:00:00Z"));
         assert_eq!(o.status, ObservationStatus::InReview);
         o.resolve(AuditMeta::new("qa", "2026-01-02T00:00:00Z"));

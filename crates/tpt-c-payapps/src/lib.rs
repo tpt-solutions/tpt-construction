@@ -62,7 +62,7 @@ mod tests {
             sov.total(),
         );
         app.set_work_completed(Money::new(150_000.0, "USD"));
-        app.set_retainage(0.05);
+        let _ = app.set_retainage(0.05);
         // gross 150k, retainage 7.5k, previously 0 => net 142.5k
         assert_eq!(app.net_claim().amount(), 142_500.0);
         app.approve("owner".to_string());

@@ -40,12 +40,23 @@ impl DocumentRegister {
 
     /// Fetch a document by id.
     pub fn get(&self, id: DocumentId) -> Result<&Document, DocumentError> {
-        self.documents.iter().find(|d| d.id == id).ok_or(DocumentError::NotFound("document"))
+        self.documents
+            .iter()
+            .find(|d| d.id == id)
+            .ok_or(DocumentError::NotFound("document"))
     }
 
     /// Add a revision to a document already in the register.
-    pub fn add_revision(&mut self, id: DocumentId, note: impl Into<String>) -> Result<i32, DocumentError> {
-        let doc = self.documents.iter_mut().find(|d| d.id == id).ok_or(DocumentError::NotFound("document"))?;
+    pub fn add_revision(
+        &mut self,
+        id: DocumentId,
+        note: impl Into<String>,
+    ) -> Result<i32, DocumentError> {
+        let doc = self
+            .documents
+            .iter_mut()
+            .find(|d| d.id == id)
+            .ok_or(DocumentError::NotFound("document"))?;
         Ok(doc.add_revision(note))
     }
 

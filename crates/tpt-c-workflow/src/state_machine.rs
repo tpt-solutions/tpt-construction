@@ -121,13 +121,7 @@ mod tests {
     fn rejects_illegal_transition() {
         let mut m = StateMachine::new(TestState::A);
         let err = m.transition(TestState::C).unwrap_err();
-        assert_eq!(
-            err,
-            TransitionError::Illegal {
-                from: "a",
-                to: "c"
-            }
-        );
+        assert_eq!(err, TransitionError::Illegal { from: "a", to: "c" });
     }
 
     #[test]

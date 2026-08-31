@@ -82,7 +82,11 @@ mod tests {
 
     #[test]
     fn injury_flag() {
-        let mut i = Incident::new(SafetyIncidentId::from_uuid(uuid::Uuid::now_v7()), "Laceration", Severity::Low);
+        let mut i = Incident::new(
+            SafetyIncidentId::from_uuid(uuid::Uuid::now_v7()),
+            "Laceration",
+            Severity::Low,
+        );
         i.injury = true;
         i.begin_investigation();
         assert_eq!(i.status, IncidentStatus::Investigating);

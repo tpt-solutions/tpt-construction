@@ -9,7 +9,6 @@
 //! status enums give each record a clear lifecycle.
 
 use thiserror::Error;
-use tpt_c_ids::SafetyIncidentId;
 
 mod checklist;
 mod incident;
@@ -17,10 +16,10 @@ mod inspection;
 mod observation;
 mod toolbox;
 
-pub use checklist::{ChecklistItem, ComplianceChecklist, ChecklistStatus};
+pub use checklist::{ChecklistItem, ChecklistStatus, ComplianceChecklist};
 pub use incident::{Incident, IncidentStatus, Severity};
 pub use inspection::{Inspection, InspectionResult};
-pub use observation::{NearMiss, SafetyObservation, SafetyCategory};
+pub use observation::{NearMiss, SafetyCategory, SafetyObservation};
 pub use toolbox::ToolboxTalk;
 
 /// Errors raised by safety operations.
@@ -34,6 +33,7 @@ pub enum SafetyError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tpt_c_ids::SafetyIncidentId;
     use uuid::Uuid;
 
     #[test]

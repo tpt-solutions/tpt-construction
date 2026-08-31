@@ -54,7 +54,10 @@ mod tests {
 
     #[test]
     fn notice_lifecycle() {
-        let mut n = Notice::new(NoticeId::from_uuid(uuid::Uuid::now_v7()), "Non-conformance #3");
+        let mut n = Notice::new(
+            NoticeId::from_uuid(uuid::Uuid::now_v7()),
+            "Non-conformance #3",
+        );
         n.acknowledge(AuditMeta::new("owner", "2026-01-01T00:00:00Z"));
         n.resolve(AuditMeta::new("owner", "2026-01-02T00:00:00Z"));
         assert_eq!(n.state(), tpt_c_workflow::NoticeState::Resolved);

@@ -15,9 +15,7 @@ use std::collections::HashMap;
 use thiserror::Error;
 use tpt_c_core::ProjectId;
 use tpt_c_ids::{ExternalId, IdFactory};
-use tpt_c_model::{
-    Element, PropertySet, PropertyValue, Project, Quantity, QuantitySet,
-};
+use tpt_c_model::{Element, Project, PropertySet, PropertyValue, Quantity, QuantitySet};
 use tpt_c_units::{Area, Count, Length, Mass, Volume};
 
 /// Errors raised while parsing or mapping an IFC document.
@@ -139,6 +137,7 @@ impl StepDoc {
 
 /// Parse an entire ISO-10303-21 document.
 pub fn parse(input: &str) -> Result<StepDoc, IfcError> {
+    eprintln!("PARSE START");
     let bytes: Vec<char> = input.chars().collect();
     let mut p = Parser { s: &bytes, pos: 0 };
     p.skip_ws();
@@ -181,6 +180,7 @@ pub fn parse(input: &str) -> Result<StepDoc, IfcError> {
         doc.entities.insert(entity.id, entity);
         p.skip_ws();
     }
+    p.skip_ws();
     p.expect_keyword("END-ISO-10303-21")?;
     p.skip_ws();
     p.expect_char(';')?;
@@ -200,7 +200,9 @@ impl<'a> Parser<'a> {
                 self.pos += 1;
             } else if c == '/' && self.peek_char(1) == Some('*') {
                 self.pos += 2;
-                while self.pos < self.s.len() && !(self.s[self.pos] == '*' && self.peek_char(1) == Some('/')) {
+                while self.pos < self.s.len()
+                    && !(self.s[self.pos] == '*' && self.peek_char(1) == Some('/'))
+                {
                     self.pos += 1;
                 }
                 self.pos += 2;
@@ -219,7 +221,9 @@ impl<'a> Parser<'a> {
         if self.pos + chars.len() > self.s.len() {
             return false;
         }
-        self.s[self.pos..self.pos + chars.len()].iter().eq(chars.iter())
+        self.s[self.pos..self.pos + chars.len()]
+            .iter()
+            .eq(chars.iter())
     }
 
     fn advance(&mut self, n: usize) {
@@ -237,7 +241,10 @@ impl<'a> Parser<'a> {
 
     fn expect_keyword(&mut self, kw: &str) -> Result<(), IfcError> {
         if !self.peek_keyword(kw) {
-            return Err(IfcError::Parse(self.pos, format!("expected keyword '{kw}'")));
+            return Err(IfcError::Parse(
+                self.pos,
+                format!("expected keyword '{kw}'"),
+            ));
         }
         self.advance(kw.chars().count());
         Ok(())
@@ -252,6 +259,8 @@ impl<'a> Parser<'a> {
             }
             if c == '(' {
                 self.skip_balanced('(', ')')?;
+            } else if c == '\'' {
+                self.skip_string()?;
             } else {
                 self.pos += 1;
             }
@@ -275,6 +284,7 @@ impl<'a> Parser<'a> {
                 if depth == 0 {
                     return Ok(());
                 }
+                continue;
             }
             self.pos += 1;
         }
@@ -532,8 +542,8 @@ pub fn to_model(doc: &StepDoc) -> Result<Project, IfcError> {
             .unwrap_or(category)
             .to_string();
 
-        let mut element = Element::new(id, name, category)
-            .with_external_id(ExternalId::IfcGuid(guid.clone()));
+        let mut element =
+            Element::new(id, name, category).with_external_id(ExternalId::IfcGuid(guid.clone()));
 
         if let Some(storey) = contained_structure_name(doc, entity.id) {
             element = element.in_storey(storey);
@@ -563,12 +573,12 @@ pub fn to_model(doc: &StepDoc) -> Result<Project, IfcError> {
 /// For an element, find the name of the spatial structure containing it.
 fn contained_structure_name(doc: &StepDoc, element_id: usize) -> Option<String> {
     for rel in doc.by_type("IFCRELCONTAINEDINSPATIALSTRUCTURE") {
-        // IfcRoot(0..3): GlobalId, OwnerHistory, Name, Description
-        // then RelatedElements(4), RelatingStructure(5)
-        if let Some(list) = rel.list_at(4) {
-            let contains = list.iter().any(|v| matches!(v, StepValue::Ref(r) if *r == element_id));
+        if let Some(list) = rel.list_at(2) {
+            let contains = list
+                .iter()
+                .any(|v| matches!(v, StepValue::Ref(r) if *r == element_id));
             if contains {
-                if let Some(struct_id) = rel.ref_at(5) {
+                if let Some(struct_id) = rel.ref_at(4) {
                     if let Ok(s) = doc.get(struct_id) {
                         if let Some(n) = s.str_at(2).filter(|n| !n.is_empty()) {
                             return Some(n.to_string());
@@ -582,16 +592,15 @@ fn contained_structure_name(doc: &StepDoc, element_id: usize) -> Option<String> 
     None
 }
 
+type PropertyMap = Vec<(String, Vec<(String, PropertyValue)>)>;
+type QuantityMap = Vec<(String, Vec<(String, Quantity)>)>;
+
 /// Collect (property-set-name, [(prop-name, value)]) for an element.
-fn property_sets_for(
-    doc: &StepDoc,
-    element_id: usize,
-) -> Result<Vec<(String, Vec<(String, PropertyValue)>)>, IfcError> {
+fn property_sets_for(doc: &StepDoc, element_id: usize) -> Result<PropertyMap, IfcError> {
     let mut out = Vec::new();
     for rel in doc.by_type("IFCRELDEFINESBYPROPERTIES") {
-        // RelatedObjects(4), RelatingPropertyDefinition(5)
         let related: Vec<usize> = rel
-            .list_at(4)
+            .list_at(2)
             .map(|l| {
                 l.iter()
                     .filter_map(|v| match v {
@@ -604,7 +613,7 @@ fn property_sets_for(
         if !related.contains(&element_id) {
             continue;
         }
-        let Some(ps_id) = rel.ref_at(5) else { continue };
+        let Some(ps_id) = rel.ref_at(4) else { continue };
         let ps = doc.get(ps_id)?;
         if ps.ty != "IFCPROPERTYSET" {
             continue;
@@ -644,14 +653,11 @@ fn single_value(params: &[StepValue]) -> Option<PropertyValue> {
 }
 
 /// Collect (quantity-set-name, [(q-name, quantity)]) for an element.
-fn quantity_sets_for(
-    doc: &StepDoc,
-    element_id: usize,
-) -> Result<Vec<(String, Vec<(String, Quantity)>)>, IfcError> {
+fn quantity_sets_for(doc: &StepDoc, element_id: usize) -> Result<QuantityMap, IfcError> {
     let mut out = Vec::new();
     for rel in doc.by_type("IFCRELDEFINESBYPROPERTIES") {
         let related: Vec<usize> = rel
-            .list_at(4)
+            .list_at(2)
             .map(|l| {
                 l.iter()
                     .filter_map(|v| match v {
@@ -664,7 +670,7 @@ fn quantity_sets_for(
         if !related.contains(&element_id) {
             continue;
         }
-        let Some(qs_id) = rel.ref_at(5) else { continue };
+        let Some(qs_id) = rel.ref_at(4) else { continue };
         let qs = doc.get(qs_id)?;
         if qs.ty != "IFCELEMENTQUANTITY" {
             continue;
@@ -696,11 +702,19 @@ fn quantity_sets_for(
 fn extract_quantity(q: &StepEntity) -> Option<(String, Quantity)> {
     let name = q.str_at(2).unwrap_or("").to_string();
     let value = match q.ty.as_str() {
-        "IFCQUANTITYLENGTH" => q.real_at(4).map(|v| Quantity::Length(Length::from_meters(v))),
-        "IFCQUANTITYAREA" => q.real_at(4).map(|v| Quantity::Area(Area::from_square_meters(v))),
-        "IFCQUANTITYVOLUME" => q.real_at(4).map(|v| Quantity::Volume(Volume::from_cubic_meters(v))),
+        "IFCQUANTITYLENGTH" => q
+            .real_at(4)
+            .map(|v| Quantity::Length(Length::from_meters(v))),
+        "IFCQUANTITYAREA" => q
+            .real_at(4)
+            .map(|v| Quantity::Area(Area::from_square_meters(v))),
+        "IFCQUANTITYVOLUME" => q
+            .real_at(4)
+            .map(|v| Quantity::Volume(Volume::from_cubic_meters(v))),
         "IFCQUANTITYCOUNT" => q.real_at(4).map(|v| Quantity::Count(Count::from_each(v))),
-        "IFCQUANTITYWEIGHT" => q.real_at(4).map(|v| Quantity::Mass(Mass::from_kilograms(v))),
+        "IFCQUANTITYWEIGHT" => q
+            .real_at(4)
+            .map(|v| Quantity::Mass(Mass::from_kilograms(v))),
         _ => None,
     }?;
     Some((name, value))
@@ -746,14 +760,28 @@ END-ISO-10303-21;
         let project = to_model(&doc).expect("map");
         assert_eq!(project.name, "Demo Project");
         assert_eq!(project.element_count(), 2);
-        let wall = project.elements.iter().find(|e| e.category == "Wall").unwrap();
+        let wall = project
+            .elements
+            .iter()
+            .find(|e| e.category == "Wall")
+            .unwrap();
         assert_eq!(wall.storey_id.as_deref(), Some("Level 1"));
-        assert!(wall.property_sets.iter().any(|ps| ps.name == "Pset_WallCommon"));
+        assert!(wall
+            .property_sets
+            .iter()
+            .any(|ps| ps.name == "Pset_WallCommon"));
         let qs = wall.quantity_sets.first().unwrap();
         assert_eq!(qs.name, "BaseQuantities");
         assert_eq!(qs.quantities.len(), 2);
-        let slab = project.elements.iter().find(|e| e.category == "Slab").unwrap();
-        assert!(slab.quantity_sets.iter().any(|qs| qs.name == "BaseQuantities"));
+        let slab = project
+            .elements
+            .iter()
+            .find(|e| e.category == "Slab")
+            .unwrap();
+        assert!(slab
+            .quantity_sets
+            .iter()
+            .any(|qs| qs.name == "BaseQuantities"));
     }
 
     #[test]

@@ -27,6 +27,8 @@ members = [
     "crates/tpt-c-schedule",
     "crates/tpt-c-risk",
     "crates/tpt-c-earned-value",
+    "crates/tpt-c-earthwork",
+    "crates/tpt-c-alignment",
     "crates/tpt-c-quantities",
     "crates/tpt-c-cost",
     "crates/tpt-c-estimating",
@@ -43,6 +45,8 @@ members = [
     "examples/quantity-takeoff",
     "examples/estimate-export",
     "examples/field-execution-e2e",
+    "examples/field-offline-sync",
+    "examples/earthwork-cut-fill",
     "examples/tpt",
 ]
 

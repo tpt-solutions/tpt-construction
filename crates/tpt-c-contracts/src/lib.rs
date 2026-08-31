@@ -10,6 +10,7 @@
 //! crate stays free of the cost-model dependency; partner crates can map these
 //! onto [`tpt_c_cost::Money`] when pricing.
 
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tpt_c_core::CoreError;
 
@@ -86,7 +87,10 @@ mod tests {
         n.workflow
             .acknowledge(AuditMeta::new("owner", "2026-01-01T00:00:00Z"))
             .unwrap();
-        assert_eq!(n.workflow.state(), tpt_c_workflow::NoticeState::Acknowledged);
+        assert_eq!(
+            n.workflow.state(),
+            tpt_c_workflow::NoticeState::Acknowledged
+        );
     }
 
     #[test]

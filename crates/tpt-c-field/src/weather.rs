@@ -54,8 +54,10 @@ impl WeatherRecord {
 
     /// Whether the day was a wash-out (storm / heavy precip).
     pub fn is_inclement(&self) -> bool {
-        matches!(self.condition, WeatherCondition::Storm | WeatherCondition::Snow)
-            || self.precipitation_mm > 5.0
+        matches!(
+            self.condition,
+            WeatherCondition::Storm | WeatherCondition::Snow
+        ) || self.precipitation_mm > 5.0
     }
 }
 

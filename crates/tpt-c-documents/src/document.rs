@@ -5,7 +5,6 @@
 
 use serde::{Deserialize, Serialize};
 use tpt_c_ids::DocumentId;
-use uuid::Uuid;
 
 /// The kind of document being controlled.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -108,9 +107,14 @@ impl Document {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
     fn doc() -> Document {
-        Document::new(DocumentId::from_uuid(Uuid::now_v7()), "Drawing A-101", DocumentType::Drawing)
+        Document::new(
+            DocumentId::from_uuid(Uuid::now_v7()),
+            "Drawing A-101",
+            DocumentType::Drawing,
+        )
     }
 
     #[test]

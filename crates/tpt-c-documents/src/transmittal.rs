@@ -43,10 +43,7 @@ mod tests {
 
     #[test]
     fn transmittal_counts_documents() {
-        let tx = DocumentTransmittal::new(
-            "TX-9",
-            vec![DocumentId::nil(), DocumentId::nil()],
-        );
+        let tx = DocumentTransmittal::new("TX-9", vec![DocumentId::nil(), DocumentId::nil()]);
         assert_eq!(tx.document_count(), 2);
         assert_eq!(tx.id, "TX-9");
     }

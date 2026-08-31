@@ -47,7 +47,11 @@ mod tests {
 
     #[test]
     fn document_revision_history() {
-        let mut doc = Document::new(DocumentId::from_uuid(Uuid::now_v7()), "Plan A", DocumentType::Drawing);
+        let mut doc = Document::new(
+            DocumentId::from_uuid(Uuid::now_v7()),
+            "Plan A",
+            DocumentType::Drawing,
+        );
         assert_eq!(doc.status, DocumentStatus::Draft);
         doc.add_revision("initial issue".to_string());
         doc.add_revision("clash resolution".to_string());

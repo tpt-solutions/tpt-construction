@@ -21,10 +21,9 @@ mod workflows;
 pub use routing::{Assignment, DueDate, Escalation, Role, RoutingError};
 pub use state_machine::{StateMachine, StateName, TransitionError};
 pub use workflows::{
-    ChangeOrderState, ChangeOrderWorkflow, IssueState, IssueWorkflow, NoticeState,
-    NoticeWorkflow, PunchListState, PunchListWorkflow, RfiState, RfiWorkflow, SubmittalState,
-    SubmittalWorkflow, TransmittalState, TransmittalWorkflow, WorkflowError, WorkflowInstance,
-    WorkflowKind,
+    ChangeOrderState, ChangeOrderWorkflow, IssueState, IssueWorkflow, NoticeState, NoticeWorkflow,
+    PunchListState, PunchListWorkflow, RfiState, RfiWorkflow, SubmittalState, SubmittalWorkflow,
+    TransmittalState, TransmittalWorkflow, WorkflowError, WorkflowInstance, WorkflowKind,
 };
 
 /// Alias for the generic workflow instance type.

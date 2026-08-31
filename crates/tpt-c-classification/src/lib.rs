@@ -89,7 +89,10 @@ pub mod masterformat {
         ("35", "Waterway and Marine Construction"),
         ("40", "Process Integration"),
         ("41", "Material Processing and Handling Equipment"),
-        ("42", "Material, Component, and Equipment Storage and Support"),
+        (
+            "42",
+            "Material, Component, and Equipment Storage and Support",
+        ),
         ("43", "Process Equipment"),
         ("44", "Pollution Control Equipment"),
         ("45", "Industry-Specific Manufacturing Equipment"),
@@ -100,10 +103,7 @@ pub mod masterformat {
 
     /// Look up a division title by its two-digit code.
     pub fn title_for(code: &str) -> Option<&'static str> {
-        DIVISIONS
-            .iter()
-            .find(|(c, _)| *c == code)
-            .map(|(_, t)| *t)
+        DIVISIONS.iter().find(|(c, _)| *c == code).map(|(_, t)| *t)
     }
 }
 

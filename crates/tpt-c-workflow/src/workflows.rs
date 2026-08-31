@@ -436,7 +436,11 @@ impl IssueWorkflow {
     }
 
     /// Assign (Open -> Assigned).
-    pub fn assign(&mut self, actor: impl Into<String>, at: AuditMeta) -> Result<(), TransitionError> {
+    pub fn assign(
+        &mut self,
+        actor: impl Into<String>,
+        at: AuditMeta,
+    ) -> Result<(), TransitionError> {
         self.inner.assign(Role::Approver, actor);
         self.inner.transition_to(IssueState::Assigned, at)
     }

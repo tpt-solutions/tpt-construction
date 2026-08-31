@@ -91,7 +91,11 @@ mod tests {
 
     #[test]
     fn claim_submit_and_resolve() {
-        let mut c = Claim::new(ClaimId::from_uuid(uuid::Uuid::now_v7()), ClaimKind::Delay, "Weather delay");
+        let mut c = Claim::new(
+            ClaimId::from_uuid(uuid::Uuid::now_v7()),
+            ClaimKind::Delay,
+            "Weather delay",
+        );
         assert_eq!(c.status, ClaimStatus::Open);
         c.submit();
         c.resolve();

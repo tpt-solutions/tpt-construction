@@ -15,17 +15,16 @@ use uuid::Uuid;
 
 /// Core domain identifiers re-exported for convenience.
 pub use tpt_c_core::{
-    AssetId, ChangeOrderId, ClaimId, ContractId, ContractItemId, DocumentId, ElementId,
-    EstimateId, IssueId, NoticeId, PaymentApplicationId, ProjectId, PunchListId, RFIId,
-    SafetyIncidentId, SubmittalId, TransmittalId,
+    AssetId, ChangeOrderId, ClaimId, ContractId, ContractItemId, DocumentId, ElementId, EstimateId,
+    IssueId, NoticeId, PaymentApplicationId, ProjectId, PunchListId, RFIId, SafetyIncidentId,
+    SubmittalId, TransmittalId,
 };
 
 /// Fixed namespace used for deterministic (UUIDv5) identifier derivation.
 ///
 /// Distinct from the DNS/URL/OID/IETF namespaces defined by RFC 4122 so that
 /// TPT-derived identifiers never collide with vendor-generated ones.
-pub const TPT_NAMESPACE: Uuid =
-    Uuid::from_u128(0x9f1b_2c3d_4e5f_6071_8293_a4b5_c6d7_e8f9);
+pub const TPT_NAMESPACE: Uuid = Uuid::from_u128(0x9f1b_2c3d_4e5f_6071_8293_a4b5_c6d7_e8f9);
 
 /// Generates identifiers. Wraps UUIDv7 (time-ordered, random) and a stable
 /// UUIDv5 derivation for reproducible builds and tests.
@@ -115,6 +114,12 @@ pub struct ExternalIdMap<I> {
     external_to_internal: HashMap<ExternalId, I>,
 }
 
+impl<I: Clone + std::hash::Hash + Eq> Default for ExternalIdMap<I> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<I: Clone + std::hash::Hash + Eq> ExternalIdMap<I> {
     /// Create an empty mapping.
     pub fn new() -> Self {
@@ -126,7 +131,11 @@ impl<I: Clone + std::hash::Hash + Eq> ExternalIdMap<I> {
 
     /// Associate `external` with `internal`, returning the previous external id
     /// if the same external id was already mapped to a different internal id.
-    pub fn insert(&mut self, internal: I, external: ExternalId) -> Result<(), ExternalIdConflict<I>> {
+    pub fn insert(
+        &mut self,
+        internal: I,
+        external: ExternalId,
+    ) -> Result<(), ExternalIdConflict<I>> {
         if let Some(prev) = self.external_to_internal.get(&external) {
             if prev != &internal {
                 return Err(ExternalIdConflict {
@@ -135,14 +144,21 @@ impl<I: Clone + std::hash::Hash + Eq> ExternalIdMap<I> {
                 });
             }
         }
-        self.external_to_internal.insert(external.clone(), internal.clone());
-        self.internal_to_external.entry(internal).or_default().push(external);
+        self.external_to_internal
+            .insert(external.clone(), internal.clone());
+        self.internal_to_external
+            .entry(internal)
+            .or_default()
+            .push(external);
         Ok(())
     }
 
     /// Look up all external ids for an internal id.
     pub fn externals_for(&self, internal: &I) -> &[ExternalId] {
-        self.internal_to_external.get(internal).map(Vec::as_slice).unwrap_or(&[])
+        self.internal_to_external
+            .get(internal)
+            .map(Vec::as_slice)
+            .unwrap_or(&[])
     }
 
     /// Resolve an external id to its internal id.
@@ -173,8 +189,14 @@ mod tests {
 
     #[test]
     fn deterministic_is_reproducible() {
-        assert_eq!(IdFactory::deterministic("wall-1"), IdFactory::deterministic("wall-1"));
-        assert_ne!(IdFactory::deterministic("wall-1"), IdFactory::deterministic("wall-2"));
+        assert_eq!(
+            IdFactory::deterministic("wall-1"),
+            IdFactory::deterministic("wall-1")
+        );
+        assert_ne!(
+            IdFactory::deterministic("wall-1"),
+            IdFactory::deterministic("wall-2")
+        );
     }
 
     #[test]
@@ -183,7 +205,8 @@ mod tests {
         let eid = IdFactory::deterministic_element("w1");
         map.insert(eid, ExternalId::IfcGuid("3O0MLfx3BDgvhRaydMkJh6".into()))
             .unwrap();
-        map.insert(eid, ExternalId::RevitId("123456".into())).unwrap();
+        map.insert(eid, ExternalId::RevitId("123456".into()))
+            .unwrap();
 
         assert_eq!(map.externals_for(&eid).len(), 2);
         let guid = ExternalId::IfcGuid("3O0MLfx3BDgvhRaydMkJh6".into());

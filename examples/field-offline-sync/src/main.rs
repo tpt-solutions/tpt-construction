@@ -13,9 +13,9 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use tpt_c_core::{AssetId, RFIId};
-use tpt_c_events::{AuditTrail, DomainEvent, EventTypeCounter, replay};
+use tpt_c_events::{replay, AuditTrail, DomainEvent, EventTypeCounter};
 use tpt_c_ids::IdFactory;
-use tpt_c_sync::{Replica, sync};
+use tpt_c_sync::{sync, Replica};
 
 /// A small snapshot of equipment state replicated across field devices.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -69,9 +69,11 @@ fn main() {
 
     assert_eq!(device_a.pending_ops().len(), 1);
     assert_eq!(device_b.pending_ops().len(), 2);
-    println!("Offline: device A has {} queued op(s), device B has {} queued op(s)",
+    println!(
+        "Offline: device A has {} queued op(s), device B has {} queued op(s)",
         device_a.pending_ops().len(),
-        device_b.pending_ops().len());
+        device_b.pending_ops().len()
+    );
 
     // --- Local audit trail (append-only, even while offline) -----------------
     let mut audit: AuditTrail = AuditTrail::new();
@@ -99,8 +101,12 @@ fn main() {
 
     // Both replicas converge. For the shared key, the greater LWW timestamp wins;
     // here device B wrote last, so its view is the convergent one.
-    let a_exc = device_a.get(&exc).expect("excavator present on A after sync");
-    let b_exc = device_b.get(&exc).expect("excavator present on B after sync");
+    let a_exc = device_a
+        .get(&exc)
+        .expect("excavator present on A after sync");
+    let b_exc = device_b
+        .get(&exc)
+        .expect("excavator present on B after sync");
     assert_eq!(a_exc, b_exc, "replicas must converge");
     assert_eq!(device_a.get(&dozer), device_b.get(&dozer));
     assert!(device_a.pending_ops().is_empty());

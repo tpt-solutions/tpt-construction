@@ -35,7 +35,12 @@ pub struct Inspection {
 
 impl Inspection {
     /// Create an inspection with a result.
-    pub fn new(id: impl Into<String>, subject: impl Into<String>, date: impl Into<String>, result: InspectionResult) -> Self {
+    pub fn new(
+        id: impl Into<String>,
+        subject: impl Into<String>,
+        date: impl Into<String>,
+        result: InspectionResult,
+    ) -> Self {
         Self {
             id: id.into(),
             subject: subject.into(),
@@ -53,7 +58,10 @@ impl Inspection {
 
     /// Whether the inspection passed (with or without notes).
     pub fn passed(&self) -> bool {
-        matches!(self.result, InspectionResult::Pass | InspectionResult::PassWithNotes)
+        matches!(
+            self.result,
+            InspectionResult::Pass | InspectionResult::PassWithNotes
+        )
     }
 }
 

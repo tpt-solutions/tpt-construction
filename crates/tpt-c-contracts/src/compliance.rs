@@ -32,7 +32,11 @@ pub struct ComplianceEvent {
 
 impl ComplianceEvent {
     /// Create an open compliance event due on `due`.
-    pub fn new(id: impl Into<String>, description: impl Into<String>, due: impl Into<String>) -> Self {
+    pub fn new(
+        id: impl Into<String>,
+        description: impl Into<String>,
+        due: impl Into<String>,
+    ) -> Self {
         Self {
             id: id.into(),
             description: description.into(),

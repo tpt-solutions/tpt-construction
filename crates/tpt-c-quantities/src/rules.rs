@@ -24,7 +24,7 @@ pub const DEFAULT_WASTE_FLOORING: f64 = 0.05;
 
 /// A configureable set of takeoff rules: per-category waste overrides plus the
 /// shared defaults.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct QuantityRules {
     /// Overrides keyed by element category substring (matched case-insensitively).
     concrete_overrides: Vec<(String, f64)>,
@@ -32,18 +32,6 @@ pub struct QuantityRules {
     rebar_overrides: Vec<(String, f64)>,
     paint_overrides: Vec<(String, f64)>,
     flooring_overrides: Vec<(String, f64)>,
-}
-
-impl Default for QuantityRules {
-    fn default() -> Self {
-        Self {
-            concrete_overrides: Vec::new(),
-            formwork_overrides: Vec::new(),
-            rebar_overrides: Vec::new(),
-            paint_overrides: Vec::new(),
-            flooring_overrides: Vec::new(),
-        }
-    }
 }
 
 impl QuantityRules {

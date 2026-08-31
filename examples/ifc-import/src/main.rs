@@ -70,13 +70,27 @@ mod tests {
         assert_eq!(project.name, "Riverside Office Building");
         // wall, slab, column, beam = 4 elements.
         assert_eq!(project.element_count(), 4);
-        let categories: Vec<&str> = project.elements.iter().map(|e| e.category.as_str()).collect();
+        let categories: Vec<&str> = project
+            .elements
+            .iter()
+            .map(|e| e.category.as_str())
+            .collect();
         assert!(categories.contains(&"Wall"));
         assert!(categories.contains(&"Column"));
         // Quantities should have been mapped from the element quantity.
-        let wall = project.elements.iter().find(|e| e.category == "Wall").unwrap();
-        assert!(wall.quantity_sets.iter().any(|qs| qs.name == "BaseQuantities"));
+        let wall = project
+            .elements
+            .iter()
+            .find(|e| e.category == "Wall")
+            .unwrap();
+        assert!(wall
+            .quantity_sets
+            .iter()
+            .any(|qs| qs.name == "BaseQuantities"));
         // Properties from the property set.
-        assert!(wall.property_sets.iter().any(|ps| ps.name == "Pset_WallCommon"));
+        assert!(wall
+            .property_sets
+            .iter()
+            .any(|ps| ps.name == "Pset_WallCommon"));
     }
 }

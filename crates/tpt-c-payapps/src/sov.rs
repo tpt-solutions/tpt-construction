@@ -37,7 +37,12 @@ impl ScheduleOfValues {
     }
 
     /// Add a line item, returning it.
-    pub fn add_item(&mut self, id: impl Into<String>, description: impl Into<String>, contract_value: Money) -> SovItem {
+    pub fn add_item(
+        &mut self,
+        id: impl Into<String>,
+        description: impl Into<String>,
+        contract_value: Money,
+    ) -> SovItem {
         let item = SovItem {
             id: id.into(),
             description: description.into(),

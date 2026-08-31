@@ -41,7 +41,12 @@ pub struct NearMiss {
 
 impl NearMiss {
     /// Create a near miss.
-    pub fn new(id: impl Into<String>, description: impl Into<String>, category: SafetyCategory, reported_by: impl Into<String>) -> Self {
+    pub fn new(
+        id: impl Into<String>,
+        description: impl Into<String>,
+        category: SafetyCategory,
+        reported_by: impl Into<String>,
+    ) -> Self {
         Self {
             id: id.into(),
             description: description.into(),
@@ -73,7 +78,11 @@ pub struct SafetyObservation {
 
 impl SafetyObservation {
     /// Create a safety observation.
-    pub fn new(id: impl Into<String>, description: impl Into<String>, category: SafetyCategory) -> Self {
+    pub fn new(
+        id: impl Into<String>,
+        description: impl Into<String>,
+        category: SafetyCategory,
+    ) -> Self {
         Self {
             id: id.into(),
             description: description.into(),
@@ -94,7 +103,12 @@ mod tests {
 
     #[test]
     fn near_miss_review() {
-        let mut n = NearMiss::new("NM-1", "Material fell near worker", SafetyCategory::Height, "carlos");
+        let mut n = NearMiss::new(
+            "NM-1",
+            "Material fell near worker",
+            SafetyCategory::Height,
+            "carlos",
+        );
         assert!(!n.reviewed);
         n.review();
         assert!(n.reviewed);
