@@ -1,0 +1,18 @@
+[package]
+name = "tpt-c-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "REST/GraphQL API models, auth patterns, authorization, project access control, webhooks, audit logging"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ids.workspace = true
+tpt-c-model.workspace = true

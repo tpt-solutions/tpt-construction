@@ -40,15 +40,23 @@ members = [
     "crates/tpt-c-contracts",
     "crates/tpt-c-payapps",
     "crates/tpt-c-safety",
+    "crates/tpt-c-fm",
+    "crates/tpt-c-assets",
+    "crates/tpt-c-maintenance",
+    "crates/tpt-c-twin",
+    "crates/tpt-c-space",
     "examples/ifc-import",
     "examples/cpm-schedule",
     "examples/quantity-takeoff",
     "examples/estimate-export",
     "examples/field-execution-e2e",
     "examples/field-offline-sync",
-    "examples/earthwork-cut-fill",
-    "examples/tpt",
-]
+     "examples/earthwork-cut-fill",
+     "examples/tpt",
+     "examples/wasm-browser-demo",
+     "crates/tpt-c-wasm",
+     "crates/tpt-c-api",
+ ]
 
 [workspace.package]
 version = "0.1.0"

@@ -1,0 +1,19 @@
+[package]
+name = "tpt-c-twin"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Digital twin state, sensor mapping, live telemetry, spatial asset context"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+tpt-c-model.workspace = true
+tpt-c-equipment.workspace = true
+tpt-c-assets.workspace = true
+tpt-c-fm.workspace = true
+tpt-c-ids.workspace = true

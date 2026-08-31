@@ -385,6 +385,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde-wasm-bindgen"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8302e169f0eddcc139c70f139d19d6467353af16f9fce27e8c30158036a1e16b"
+dependencies = [
+ "js-sys",
+ "serde",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "serde_core"
 version = "1.0.229"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -502,6 +513,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-c-api"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-model",
+]
+
+[[package]]
+name = "tpt-c-assets"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tpt-c-core",
+ "tpt-c-ids",
+]
+
+[[package]]
 name = "tpt-c-bcf"
 version = "0.1.0"
 dependencies = [
@@ -596,6 +627,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-c-equipment"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-units",
+ "uuid",
+]
+
+[[package]]
 name = "tpt-c-estimating"
 version = "0.1.0"
 dependencies = [
@@ -633,6 +676,17 @@ dependencies = [
  "tpt-c-core",
  "tpt-c-ids",
  "uuid",
+]
+
+[[package]]
+name = "tpt-c-fm"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-model",
 ]
 
 [[package]]
@@ -683,6 +737,16 @@ dependencies = [
  "tpt-c-ids",
  "tpt-c-model",
  "tpt-c-units",
+]
+
+[[package]]
+name = "tpt-c-maintenance"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tpt-c-assets",
+ "tpt-c-core",
+ "tpt-c-ids",
 ]
 
 [[package]]
@@ -758,6 +822,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-c-space"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tpt-c-core",
+ "tpt-c-model",
+]
+
+[[package]]
 name = "tpt-c-sync"
 version = "0.1.0"
 dependencies = [
@@ -766,10 +839,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-c-twin"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "tpt-c-assets",
+ "tpt-c-equipment",
+ "tpt-c-fm",
+ "tpt-c-ids",
+ "tpt-c-model",
+]
+
+[[package]]
 name = "tpt-c-units"
 version = "0.1.0"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "tpt-c-wasm"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde-wasm-bindgen",
+ "tpt-c-core",
+ "tpt-c-geometry",
+ "tpt-c-gltf",
+ "tpt-c-ifc",
+ "tpt-c-model",
+ "tpt-c-quantities",
+ "tpt-c-schedule",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
@@ -859,6 +961,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ef64dbcc55df09c7e5a46182d181c2cfa3e925f3da937ea764728b4bbb9dcbf"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "wasm-browser-demo"
+version = "0.1.0"
+dependencies = [
+ "tpt-c-ifc",
+ "tpt-c-model",
+ "tpt-c-quantities",
+ "tpt-c-wasm",
+]
+
+[[package]]
+name = "web-sys"
+version = "0.3.104"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c435338968042f4f59a557f690a253676d47ce13ceb55d70100e7facf6620a30"
+dependencies = [
+ "js-sys",
+ "wasm-bindgen",
 ]
 
 [[package]]

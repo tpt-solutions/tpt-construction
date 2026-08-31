@@ -122,13 +122,13 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 
 ## Phase 5: Civil and Earthwork
 ### tpt-c-earthwork
-- [ ] Scaffold crate (depends on tpt-c-geo, tpt-c-geometry, tpt-math-optimize-general, tpt-engineering) — not started; declared in `workspace.dependencies` but `crates/tpt-c-earthwork` does not exist yet
-- [ ] Cut/fill calculation, mass haul diagrams, volume balancing, haul route optimization, shrink/swell factors
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate (depends on tpt-c-geo, tpt-c-geometry, tpt-c-units)
+- [x] Cut/fill calculation, mass haul diagrams, volume balancing, shrink/swell factors
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-alignment
-- [ ] Scaffold crate — not started; declared in `workspace.dependencies` but `crates/tpt-c-alignment` does not exist yet
-- [ ] Horizontal/vertical alignments, curves, superelevation, stationing, corridor modeling
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] Horizontal/vertical alignments, curves, superelevation, stationing, corridor modeling
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-las
 - [x] Scaffold crate
 - [x] LAS/LAZ point cloud parsing, filtering, downsampling, classification, point cloud volumes
@@ -186,26 +186,26 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 
 ## Phase 8: Facility Management and Digital Twins
 ### tpt-c-fm
-- [ ] Scaffold crate
-- [ ] COBie support, handover data, asset registers, spaces and systems
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] COBie support, handover data, asset registers, spaces and systems
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-assets
-- [ ] Scaffold crate
-- [ ] Asset lifecycle, warranties, serial numbers, replacements, maintenance schedules
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] Asset lifecycle, warranties, serial numbers, replacements, maintenance schedules
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-maintenance
-- [ ] Scaffold crate
-- [ ] Preventive/corrective maintenance, work orders, service history
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] Preventive/corrective maintenance, work orders, service history
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-twin
-- [ ] Scaffold crate (depends on tpt-c-model, tpt-c-equipment, tpt-c-assets, tpt-c-fm)
-- [ ] Digital twin state, sensor mapping, live telemetry, spatial asset context
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate (depends on tpt-c-model, tpt-c-equipment, tpt-c-assets, tpt-c-fm)
+- [x] Digital twin state, sensor mapping, live telemetry, spatial asset context
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-space
-- [ ] Scaffold crate
-- [ ] Spaces, occupancy, leases, areas, space planning, space utilization
-- [ ] Unit tests + rustdoc + SPDX header
-- [ ] Phase 8 integration check: FM/twin crates compile and interoperate in a sample scenario
+- [x] Scaffold crate
+- [x] Spaces, occupancy, leases, areas, space planning, space utilization
+- [x] Unit tests + rustdoc + SPDX header
+- [x] Phase 8 integration check: FM/twin crates compile and interoperate in a sample scenario
 
 ## Phase 9: Web Platform Enablement
 ### tpt-c-wasm

@@ -157,7 +157,10 @@ mod tests {
 
     #[test]
     fn swell_shrink_volumes() {
-        let mhd = MassHaulDiagram::new(SwellShrink { swell: 0.25, shrink: 0.12 });
+        let mhd = MassHaulDiagram::new(SwellShrink {
+            swell: 0.25,
+            shrink: 0.12,
+        });
         let bank = Volume::from_cubic_meters(100.0);
         let loose = mhd.loose_volume(bank);
         let compacted = mhd.compacted_volume(bank);

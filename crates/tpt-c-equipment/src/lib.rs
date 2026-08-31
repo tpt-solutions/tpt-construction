@@ -303,7 +303,9 @@ impl MaintenancePlan {
     /// Build a plan from hour and day intervals.
     pub fn new(interval_hours: f64, interval_days: f64) -> Result<Self, EquipmentError> {
         if interval_hours < 0.0 || interval_days < 0.0 {
-            return Err(EquipmentError::InvalidInterval("intervals must be non-negative"));
+            return Err(EquipmentError::InvalidInterval(
+                "intervals must be non-negative",
+            ));
         }
         Ok(Self {
             interval_hours,
@@ -364,7 +366,9 @@ impl EquipmentRegistry {
     /// Fails if the asset tag is already in use by another asset.
     pub fn register(&mut self, equipment: Equipment) -> Result<AssetId, EquipmentError> {
         if self.asset_tag_index.contains_key(&equipment.asset_tag) {
-            return Err(EquipmentError::DuplicateAssetTag(equipment.asset_tag.clone()));
+            return Err(EquipmentError::DuplicateAssetTag(
+                equipment.asset_tag.clone(),
+            ));
         }
         let id = equipment.id;
         self.asset_tag_index.insert(equipment.asset_tag.clone(), id);
@@ -441,7 +445,10 @@ impl EquipmentRegistry {
             Some(r) if !r.is_empty() => r,
             _ => return 0.0,
         };
-        let total: f64 = records.iter().map(UtilizationRecord::utilization_rate).sum();
+        let total: f64 = records
+            .iter()
+            .map(UtilizationRecord::utilization_rate)
+            .sum();
         total / records.len() as f64
     }
 
@@ -450,7 +457,9 @@ impl EquipmentRegistry {
     /// Engine-hour and GPS readings update the corresponding equipment fields;
     /// idle readings are reflected in the equipment status.
     pub fn ingest_telematics(&mut self, event: &TelematicsEvent) -> Result<(), EquipmentError> {
-        let eq = self.get_mut(event.equipment_id).ok_or(EquipmentError::NotFound(event.equipment_id))?;
+        let eq = self
+            .get_mut(event.equipment_id)
+            .ok_or(EquipmentError::NotFound(event.equipment_id))?;
         match &event.reading {
             TelematicsReading::GpsFix(fix) => {
                 eq.position = Some(fix.clone());
@@ -486,12 +495,15 @@ impl EquipmentRegistry {
                 let hours = eq.hours_since_service();
                 let days = days_since_service(*id);
                 if plan.is_due(hours, days) {
-                    let (reason, over) = if plan.interval_hours > 0.0 && hours >= plan.interval_hours
-                    {
-                        (MaintenanceReason::HourInterval, Some(hours - plan.interval_hours))
-                    } else {
-                        (MaintenanceReason::DayInterval, None)
-                    };
+                    let (reason, over) =
+                        if plan.interval_hours > 0.0 && hours >= plan.interval_hours {
+                            (
+                                MaintenanceReason::HourInterval,
+                                Some(hours - plan.interval_hours),
+                            )
+                        } else {
+                            (MaintenanceReason::DayInterval, None)
+                        };
                     triggers.push(MaintenanceTrigger {
                         equipment_id: *id,
                         reason,
@@ -536,8 +548,10 @@ mod tests {
     fn fuel_and_utilization() {
         let mut reg = EquipmentRegistry::new();
         let id = reg.register_new("Loader", "LD-1").unwrap();
-        reg.record_fuel(id, FuelLogEntry::from_litres("2026-01-01T00:00:00Z", 200.0)).unwrap();
-        reg.record_fuel(id, FuelLogEntry::from_litres("2026-01-02T00:00:00Z", 150.0)).unwrap();
+        reg.record_fuel(id, FuelLogEntry::from_litres("2026-01-01T00:00:00Z", 200.0))
+            .unwrap();
+        reg.record_fuel(id, FuelLogEntry::from_litres("2026-01-02T00:00:00Z", 150.0))
+            .unwrap();
         assert!((reg.total_fuel_litres(id) - 350.0).abs() < 1e-9);
 
         let rec = UtilizationRecord {
@@ -580,7 +594,8 @@ mod tests {
         let mut reg = EquipmentRegistry::new();
         let id = reg.register_new("Dozer", "DZ-1").unwrap();
         reg.get_mut(id).unwrap().accumulated_hours = 500.0;
-        reg.set_maintenance_plan(id, MaintenancePlan::new(400.0, 0.0).unwrap()).unwrap();
+        reg.set_maintenance_plan(id, MaintenancePlan::new(400.0, 0.0).unwrap())
+            .unwrap();
         let triggers = reg.check_maintenance(|_| 0.0);
         assert_eq!(triggers.len(), 1);
         assert_eq!(triggers[0].reason, MaintenanceReason::HourInterval);

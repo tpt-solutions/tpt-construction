@@ -1,0 +1,16 @@
+[package]
+name = "tpt-c-space"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Spaces, occupancy, leases, areas, space planning, space utilization"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+tpt-c-core.workspace = true
+tpt-c-model.workspace = true

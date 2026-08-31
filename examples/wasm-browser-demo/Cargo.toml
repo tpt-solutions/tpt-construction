@@ -1,0 +1,18 @@
+[package]
+name = "wasm-browser-demo"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+description = "Phase 9 integration example: consume tpt-c-wasm from a browser-style Rust binary"
+
+[dependencies]
+tpt-c-wasm.workspace = true
+tpt-c-ifc.workspace = true
+tpt-c-model.workspace = true
+tpt-c-quantities.workspace = true
+
+[lints]
+workspace = true

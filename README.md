@@ -109,6 +109,10 @@ Cargo features when unavoidable. Copyleft licenses are banned. Any unavoidable
 Apache-only dependency will be replaced with an alternative implemented from
 scratch where practical.
 
+Known transitive Apache-only dependencies (carried by upstream crates):
+- `zopfli v0.8.3` (Apache-2.0) — transitive via `zip` → `rust_xlsxwriter` in `tpt-c-xlsx`
+- `ryu v1.0.23` (Apache-2.0 OR BSL-1.0) — transitive via `csv` in `tpt-c-csv`
+
 ## License
 
 Licensed under either of

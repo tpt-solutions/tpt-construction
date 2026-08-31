@@ -1,0 +1,16 @@
+[package]
+name = "tpt-c-assets"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Asset lifecycle, warranties, serial numbers, replacements, maintenance schedules"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ids.workspace = true

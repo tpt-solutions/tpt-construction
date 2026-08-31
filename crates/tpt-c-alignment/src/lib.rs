@@ -243,7 +243,10 @@ mod tests {
             length: 100.0,
         };
         assert_eq!(el.elevation_at(0.0), 100.0);
-        assert_eq!(el.elevation_at(50.0), 100.0 + 0.03 * 50.0 + (-0.05 / 100.0) * 2500.0);
+        assert_eq!(
+            el.elevation_at(50.0),
+            100.0 + 0.03 * 50.0 + (-0.05 / 100.0) * 2500.0
+        );
     }
 
     #[test]

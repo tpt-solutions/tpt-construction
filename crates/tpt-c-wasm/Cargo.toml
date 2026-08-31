@@ -1,0 +1,32 @@
+[package]
+name = "tpt-c-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "WASM bindings for IFC parsing, quantity takeoff, CPM scheduling, clash detection prep, model simplification, glTF export"
+
+[lints]
+workspace = true
+
+[features]
+default = ["js"]
+js = ["wasm-bindgen", "serde-wasm-bindgen", "web-sys"]
+web = ["wasm-bindgen", "serde-wasm-bindgen", "web-sys"]
+
+[dependencies]
+serde.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ifc.workspace = true
+tpt-c-model.workspace = true
+tpt-c-quantities.workspace = true
+tpt-c-schedule.workspace = true
+tpt-c-geometry.workspace = true
+tpt-c-gltf.workspace = true
+
+# Optional WASM binding layer. The core crates remain pure Rust and testable
+# without any wasm target. Enable `wasm-bindgen` only when building for web.
+wasm-bindgen = { version = "0.2", optional = true }
+serde-wasm-bindgen = { version = "0.6", optional = true }
+web-sys = { version = "0.3", optional = true, features = ["console"] }
