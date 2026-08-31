@@ -15,7 +15,7 @@ use crate::date::{NaiveDate, Weekday};
 /// and an optional set of holiday dates that are never worked. All projections
 /// are day-granular: a task that consumes a partial working day is reported as
 /// occurring on the day its first working hour falls.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Calendar {
     /// Weekdays that count as working days.
     pub working_days: HashSet<Weekday>,

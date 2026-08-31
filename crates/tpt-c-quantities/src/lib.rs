@@ -163,7 +163,12 @@ mod tests {
 
     #[test]
     fn from_model_roundtrip() {
-        let m = MeasuredQuantity::from_model(&tpt_c_model::Quantity::Area(Area::from_square_feet(50.0)));
-        assert_eq!(m, Some(MeasuredQuantity::Area(Area::from_square_feet(50.0))));
+        let m = MeasuredQuantity::from_model(&tpt_c_model::Quantity::Area(Area::from_square_feet(
+            50.0,
+        )));
+        assert_eq!(
+            m,
+            Some(MeasuredQuantity::Area(Area::from_square_feet(50.0)))
+        );
     }
 }

@@ -101,10 +101,10 @@ impl Actuals {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tpt_c_core::ActivityId;
-    use tpt_c_units::Duration;
     use crate::activity::Activity;
     use crate::ScheduleNetwork;
+    use tpt_c_core::ActivityId;
+    use tpt_c_units::Duration;
 
     #[test]
     fn actuals_variance() {
@@ -117,8 +117,12 @@ mod tests {
     #[test]
     fn baseline_captures_result() {
         let mut net = ScheduleNetwork::new();
-        net.add_activity(Activity::new(ActivityId::nil(), "A", Duration::from_hours(5.0)))
-            .unwrap();
+        net.add_activity(Activity::new(
+            ActivityId::nil(),
+            "A",
+            Duration::from_hours(5.0),
+        ))
+        .unwrap();
         let result = net.schedule().unwrap();
         let base = Baseline::new("v1", "2026-01-01T00:00:00Z", result);
         assert_eq!(base.name, "v1");

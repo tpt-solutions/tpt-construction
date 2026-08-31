@@ -11,11 +11,15 @@ description = "Estimate builder, bid preparation, pricing workflows, revisions, 
 serde.workspace = true
 thiserror.workspace = true
 tpt-c-core.workspace = true
+tpt-c-ids.workspace = true
 tpt-c-classification.workspace = true
 tpt-c-model.workspace = true
 tpt-c-units.workspace = true
 tpt-c-quantities.workspace = true
 tpt-c-cost.workspace = true
+tpt-c-csv.workspace = true
 
 [dev-dependencies]
+serde_json.workspace = true
 tpt-c-ids.workspace = true
+tpt-c-xlsx.workspace = true

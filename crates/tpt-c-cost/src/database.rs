@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tpt_c_classification::Classification;
 
-use crate::resource::{ResourceRate, ResourceKind, RateUnit};
+use crate::resource::{RateUnit, ResourceKind, ResourceRate};
 use crate::Money;
 
 /// A cost code: a classification-style key used to group and price work.

@@ -1,548 +1,773 @@
 // Copyright (c) TPT Solutions
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-//! IFC (ISO 10303-21 STEP) parser and mapper to the neutral model.
+//! IFC (ISO 10303-21 / STEP) parser and mapper to the neutral model.
 //!
-//! Supports the entity families needed for takeoff and coordination:
+//! Supports the building elements needed for quantity takeoff and coordination:
 //! `IfcProject`, `IfcSite`, `IfcBuilding`, `IfcBuildingStorey`, `IfcWall`,
-//! `IfcSlab`, `IfcColumn`, `IfcBeam`, `IfcDoor`, `IfcWindow`, `IfcSpace`,
-//! `IfcPropertySet` and `IfcElementQuantity`. Geometry representation parsing
-//! is out of scope; quantities and property sets are extracted and attached to
-//! the resulting [`tpt_c_model::Project`].
+//! `IfcSlab`, `IfcColumn`, `IfcBeam`, `IfcDoor`, `IfcWindow`, `IfcSpace`, plus
+//! property sets and element quantities. Geometry (B-rep / tessellation) is not
+//! decoded; instead the parser extracts the semantic structure, classifications,
+//! properties, and quantities and maps them onto [`tpt_c_model`].
 
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
-use tpt_c_classification::ClassificationSystem;
 use tpt_c_core::ProjectId;
-use tpt_c_ids::IdFactory;
+use tpt_c_ids::{ExternalId, IdFactory};
 use tpt_c_model::{
-    Element, Project, PropertySet, PropertyValue, Quantity, QuantitySet,
+    Element, PropertySet, PropertyValue, Project, Quantity, QuantitySet,
 };
 use tpt_c_units::{Area, Count, Length, Mass, Volume};
 
-/// Errors produced while parsing IFC.
+/// Errors raised while parsing or mapping an IFC document.
 #[derive(Debug, Error, PartialEq, Eq)]
 pub enum IfcError {
-    /// The STEP container markers were not found.
-    #[error("not a valid STEP file (missing ISO-10303-21 markers)")]
-    NotStep,
-    /// A value could not be parsed.
-    #[error("parse error near: {0}")]
-    ParseError(String),
-    /// A referenced entity id was missing.
+    /// The file was not a valid ISO-10303-21 document.
+    #[error("invalid IFC header: {0}")]
+    InvalidHeader(String),
+    /// The data section was malformed.
+    #[error("parse error near offset {0}: {1}")]
+    Parse(usize, String),
+    /// A referenced entity id did not exist.
     #[error("dangling reference #{0}")]
     DanglingRef(usize),
-    /// No IfcProject was present.
-    #[error("no IfcProject found in file")]
-    NoProject,
+    /// A required entity (IfcProject) was missing.
+    #[error("missing IfcProject in document")]
+    MissingProject,
 }
 
-type Result<T> = std::result::Result<T, IfcError>;
-
-/// A parsed STEP value.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+/// A value in the STEP parameter grammar.
+#[derive(Debug, Clone, PartialEq)]
 pub enum StepValue {
-    /// `#id` reference.
+    /// An entity reference, e.g. `#12`.
     Ref(usize),
-    /// Single-quoted string.
+    /// A string literal (quotes already stripped, `''` unescaped).
     Str(String),
-    /// Numeric literal.
-    Num(f64),
-    /// `.ENUMERATION.` value.
+    /// A real number.
+    Real(f64),
+    /// An integer.
+    Int(i64),
+    /// An enumeration literal (dots stripped), e.g. `WALL`.
     Enum(String),
-    /// `(a, b, c)` list.
+    /// A list of values.
     List(Vec<StepValue>),
-    /// `EntityName(params)` value.
-    Entity(String, Vec<StepValue>),
-    /// `$` unset.
-    Unset,
+    /// `$` — attribute not assigned.
+    Unspecified,
+    /// `*` — attribute redeclared/inherited.
+    Star,
 }
 
-/// A single `#id = TYPE(params);` instance.
-#[derive(Clone, Debug, PartialEq)]
-pub struct StepInstance {
-    /// Instance id.
+/// A single STEP entity instance: `#id = TYPE(...)`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct StepEntity {
+    /// The instance id (`#id`).
     pub id: usize,
-    /// Entity type name (e.g. `IFCWALL`).
+    /// The entity type name (e.g. `IFCWALL`).
     pub ty: String,
-    /// Parameter values.
+    /// Positional parameters.
     pub params: Vec<StepValue>,
 }
 
-fn find_matching_paren(s: &str) -> Result<usize> {
-    if !s.starts_with('(') {
-        return Err(IfcError::ParseError("expected '('".into()));
+impl StepEntity {
+    /// String at `i`, if present and a string.
+    pub fn str_at(&self, i: usize) -> Option<&str> {
+        match self.params.get(i)? {
+            StepValue::Str(s) => Some(s.as_str()),
+            _ => None,
+        }
     }
-    let mut depth = 0i32;
-    for (i, c) in s.char_indices() {
-        match c {
-            '(' => depth += 1,
-            ')' => {
+    /// Real at `i`, if present and numeric (int or real).
+    pub fn real_at(&self, i: usize) -> Option<f64> {
+        match self.params.get(i)? {
+            StepValue::Real(r) => Some(*r),
+            StepValue::Int(n) => Some(*n as f64),
+            _ => None,
+        }
+    }
+    /// Integer at `i`.
+    pub fn int_at(&self, i: usize) -> Option<i64> {
+        match self.params.get(i)? {
+            StepValue::Int(n) => Some(*n),
+            _ => None,
+        }
+    }
+    /// Entity reference at `i`.
+    pub fn ref_at(&self, i: usize) -> Option<usize> {
+        match self.params.get(i)? {
+            StepValue::Ref(r) => Some(*r),
+            _ => None,
+        }
+    }
+    /// List at `i`.
+    pub fn list_at(&self, i: usize) -> Option<&[StepValue]> {
+        match self.params.get(i)? {
+            StepValue::List(l) => Some(l.as_slice()),
+            _ => None,
+        }
+    }
+}
+
+/// A parsed STEP document.
+#[derive(Debug, Clone, Default)]
+pub struct StepDoc {
+    /// All entities keyed by instance id.
+    pub entities: HashMap<usize, StepEntity>,
+}
+
+impl StepDoc {
+    /// Look up an entity by id.
+    pub fn get(&self, id: usize) -> Result<&StepEntity, IfcError> {
+        self.entities.get(&id).ok_or(IfcError::DanglingRef(id))
+    }
+
+    /// All entities of a given type (case-insensitive).
+    pub fn by_type(&self, ty: &str) -> Vec<&StepEntity> {
+        let ty = ty.to_ascii_uppercase();
+        self.entities.values().filter(|e| e.ty == ty).collect()
+    }
+
+    /// All entities whose type starts with `prefix` (case-insensitive).
+    pub fn by_type_prefix(&self, prefix: &str) -> Vec<&StepEntity> {
+        let prefix = prefix.to_ascii_uppercase();
+        self.entities
+            .values()
+            .filter(|e| e.ty.starts_with(&prefix))
+            .collect()
+    }
+}
+
+/// Parse an entire ISO-10303-21 document.
+pub fn parse(input: &str) -> Result<StepDoc, IfcError> {
+    let bytes: Vec<char> = input.chars().collect();
+    let mut p = Parser { s: &bytes, pos: 0 };
+    p.skip_ws();
+    p.expect_keyword("ISO-10303-21")?;
+    p.skip_ws();
+    p.expect_char(';')?;
+    p.skip_ws();
+    p.expect_keyword("HEADER")?;
+    p.skip_ws();
+    p.expect_char(';')?;
+    p.skip_ws();
+    // Consume header records until ENDSEC.
+    loop {
+        p.skip_ws();
+        if p.peek_keyword("ENDSEC") {
+            p.advance(6);
+            p.skip_ws();
+            p.expect_char(';')?;
+            break;
+        }
+        p.skip_record()?;
+        p.skip_ws();
+    }
+    p.skip_ws();
+    p.expect_keyword("DATA")?;
+    p.skip_ws();
+    p.expect_char(';')?;
+    p.skip_ws();
+
+    let mut doc = StepDoc::default();
+    loop {
+        p.skip_ws();
+        if p.peek_keyword("ENDSEC") {
+            p.advance(6);
+            p.skip_ws();
+            p.expect_char(';')?;
+            break;
+        }
+        let entity = p.parse_entity_instance()?;
+        doc.entities.insert(entity.id, entity);
+        p.skip_ws();
+    }
+    p.expect_keyword("END-ISO-10303-21")?;
+    p.skip_ws();
+    p.expect_char(';')?;
+    Ok(doc)
+}
+
+struct Parser<'a> {
+    s: &'a [char],
+    pos: usize,
+}
+
+impl<'a> Parser<'a> {
+    fn skip_ws(&mut self) {
+        while self.pos < self.s.len() {
+            let c = self.s[self.pos];
+            if c.is_whitespace() {
+                self.pos += 1;
+            } else if c == '/' && self.peek_char(1) == Some('*') {
+                self.pos += 2;
+                while self.pos < self.s.len() && !(self.s[self.pos] == '*' && self.peek_char(1) == Some('/')) {
+                    self.pos += 1;
+                }
+                self.pos += 2;
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn peek_char(&self, ahead: usize) -> Option<char> {
+        self.s.get(self.pos + ahead).copied()
+    }
+
+    fn peek_keyword(&self, kw: &str) -> bool {
+        let chars: Vec<char> = kw.chars().collect();
+        if self.pos + chars.len() > self.s.len() {
+            return false;
+        }
+        self.s[self.pos..self.pos + chars.len()].iter().eq(chars.iter())
+    }
+
+    fn advance(&mut self, n: usize) {
+        self.pos += n;
+    }
+
+    fn expect_char(&mut self, c: char) -> Result<(), IfcError> {
+        self.skip_ws();
+        if self.peek_char(0) != Some(c) {
+            return Err(IfcError::Parse(self.pos, format!("expected '{c}'")));
+        }
+        self.pos += 1;
+        Ok(())
+    }
+
+    fn expect_keyword(&mut self, kw: &str) -> Result<(), IfcError> {
+        if !self.peek_keyword(kw) {
+            return Err(IfcError::Parse(self.pos, format!("expected keyword '{kw}'")));
+        }
+        self.advance(kw.chars().count());
+        Ok(())
+    }
+
+    fn skip_record(&mut self) -> Result<(), IfcError> {
+        while self.pos < self.s.len() {
+            let c = self.s[self.pos];
+            if c == ';' {
+                self.pos += 1;
+                return Ok(());
+            }
+            if c == '(' {
+                self.skip_balanced('(', ')')?;
+            } else {
+                self.pos += 1;
+            }
+        }
+        Err(IfcError::Parse(self.pos, "unexpected EOF in header".into()))
+    }
+
+    fn skip_balanced(&mut self, open: char, close: char) -> Result<(), IfcError> {
+        let mut depth = 0;
+        while self.pos < self.s.len() {
+            let c = self.s[self.pos];
+            if c == '\'' {
+                self.skip_string()?;
+                continue;
+            }
+            if c == open {
+                depth += 1;
+            } else if c == close {
                 depth -= 1;
+                self.pos += 1;
                 if depth == 0 {
-                    return Ok(i);
+                    return Ok(());
                 }
             }
-            '\'' => {
-                let mut j = i + 1;
-                let b = s.as_bytes();
-                while j < b.len() {
-                    if b[j] == b'\'' {
-                        if j + 1 < b.len() && b[j + 1] == b'\'' {
-                            j += 2;
-                            continue;
-                        }
-                        break;
-                    }
-                    j += 1;
-                }
-            }
-            _ => {}
+            self.pos += 1;
         }
+        Err(IfcError::Parse(self.pos, "unbalanced delimiter".into()))
     }
-    Err(IfcError::ParseError("unbalanced parentheses".into()))
-}
 
-fn split_top_level(inner: &str) -> Vec<&str> {
-    let mut out = Vec::new();
-    let mut depth = 0i32;
-    let mut start = 0;
-    let b = inner.as_bytes();
-    let mut i = 0;
-    while i < b.len() {
-        match b[i] {
-            b'(' => depth += 1,
-            b')' => depth -= 1,
-            b'\'' => {
-                i += 1;
-                while i < b.len() {
-                    if b[i] == b'\'' {
-                        if i + 1 < b.len() && b[i + 1] == b'\'' {
-                            i += 2;
-                            continue;
-                        }
-                        break;
-                    }
-                    i += 1;
-                }
+    fn skip_string(&mut self) -> Result<(), IfcError> {
+        self.pos += 1;
+        while self.pos < self.s.len() {
+            let c = self.s[self.pos];
+            if c == '\'' && self.peek_char(1) == Some('\'') {
+                self.pos += 2;
+                continue;
             }
-            b',' if depth == 0 => {
-                out.push(&inner[start..i]);
-                start = i + 1;
+            if c == '\'' {
+                self.pos += 1;
+                return Ok(());
             }
-            _ => {}
+            self.pos += 1;
         }
-        i += 1;
+        Err(IfcError::Parse(self.pos, "unterminated string".into()))
     }
-    out.push(&inner[start..]);
-    out
-}
 
-fn parse_value(s: &str) -> Result<(StepValue, &str)> {
-    let s = s.trim_start();
-    let b = s.as_bytes();
-    if b.is_empty() {
-        return Err(IfcError::ParseError("unexpected end of input".into()));
+    fn parse_entity_instance(&mut self) -> Result<StepEntity, IfcError> {
+        self.skip_ws();
+        if self.peek_char(0) != Some('#') {
+            return Err(IfcError::Parse(self.pos, "expected '#id='".into()));
+        }
+        self.pos += 1;
+        let id = self.parse_uint()?;
+        self.skip_ws();
+        self.expect_char('=')?;
+        self.skip_ws();
+        let ty = self.parse_identifier()?;
+        self.skip_ws();
+        self.expect_char('(')?;
+        let params = self.parse_value_list(')')?;
+        self.skip_ws();
+        self.expect_char(';')?;
+        Ok(StepEntity { id, ty, params })
     }
-    match b[0] {
-        b'$' | b'*' => Ok((StepValue::Unset, &s[1..])),
-        b'\'' => {
-            let mut i = 1;
-            let mut out = String::new();
-            while i < s.len() {
-                let c = b[i];
-                if c == b'\'' {
-                    if i + 1 < s.len() && b[i + 1] == b'\'' {
-                        out.push('\'');
-                        i += 2;
-                        continue;
-                    }
-                    i += 1;
+
+    fn parse_uint(&mut self) -> Result<usize, IfcError> {
+        let start = self.pos;
+        while self.pos < self.s.len() && self.s[self.pos].is_ascii_digit() {
+            self.pos += 1;
+        }
+        let s: String = self.s[start..self.pos].iter().collect();
+        s.parse::<usize>()
+            .map_err(|_| IfcError::Parse(start, "invalid integer id".into()))
+    }
+
+    fn parse_identifier(&mut self) -> Result<String, IfcError> {
+        self.skip_ws();
+        let start = self.pos;
+        while self.pos < self.s.len() {
+            let c = self.s[self.pos];
+            if c.is_ascii_alphanumeric() || c == '_' {
+                self.pos += 1;
+            } else {
+                break;
+            }
+        }
+        if self.pos == start {
+            return Err(IfcError::Parse(self.pos, "expected identifier".into()));
+        }
+        Ok(self.s[start..self.pos].iter().collect())
+    }
+
+    fn parse_value_list(&mut self, close: char) -> Result<Vec<StepValue>, IfcError> {
+        let mut out = Vec::new();
+        self.skip_ws();
+        if self.peek_char(0) == Some(close) {
+            self.pos += 1;
+            return Ok(out);
+        }
+        loop {
+            let v = self.parse_value()?;
+            out.push(v);
+            self.skip_ws();
+            match self.peek_char(0) {
+                Some(',') => {
+                    self.pos += 1;
+                    continue;
+                }
+                Some(c) if c == close => {
+                    self.pos += 1;
                     break;
                 }
-                out.push(s.as_bytes()[i] as char);
-                i += 1;
+                _ => return Err(IfcError::Parse(self.pos, "expected ',' or ')'".into())),
             }
-            Ok((StepValue::Str(out), &s[i..]))
         }
-        b'#' => {
-            let rest = &s[1..];
-            let end = rest.find(|c: char| !c.is_ascii_digit()).unwrap_or(rest.len());
-            let id: usize = rest[..end]
-                .parse()
-                .map_err(|_| IfcError::ParseError("bad reference".into()))?;
-            Ok((StepValue::Ref(id), &rest[end..]))
-        }
-        b'(' => {
-            let close = find_matching_paren(s)?;
-            let inner = &s[1..close];
-            let segs = split_top_level(inner);
-            let mut items = Vec::new();
-            for seg in segs {
-                let seg = seg.trim();
-                if seg.is_empty() {
-                    continue;
+        Ok(out)
+    }
+
+    fn parse_value(&mut self) -> Result<StepValue, IfcError> {
+        self.skip_ws();
+        let c = match self.peek_char(0) {
+            Some(c) => c,
+            None => return Err(IfcError::Parse(self.pos, "unexpected EOF".into())),
+        };
+        match c {
+            '$' => {
+                self.pos += 1;
+                Ok(StepValue::Unspecified)
+            }
+            '*' => {
+                self.pos += 1;
+                Ok(StepValue::Star)
+            }
+            '#' => {
+                self.pos += 1;
+                let id = self.parse_uint()?;
+                Ok(StepValue::Ref(id))
+            }
+            '\'' => {
+                let s = self.parse_string()?;
+                Ok(StepValue::Str(s))
+            }
+            '(' => {
+                self.pos += 1;
+                let list = self.parse_value_list(')')?;
+                Ok(StepValue::List(list))
+            }
+            '.' => {
+                self.pos += 1;
+                let start = self.pos;
+                while self.pos < self.s.len() && self.s[self.pos] != '.' {
+                    self.pos += 1;
                 }
-                let (v, _) = parse_value(seg)?;
-                items.push(v);
+                let s: String = self.s[start..self.pos].iter().collect();
+                if self.peek_char(0) != Some('.') {
+                    return Err(IfcError::Parse(self.pos, "unterminated enum".into()));
+                }
+                self.pos += 1;
+                Ok(StepValue::Enum(s))
             }
-            Ok((StepValue::List(items), &s[close + 1..]))
-        }
-        b'.' => {
-            let rest = &s[1..];
-            let end = rest.find('.').ok_or(IfcError::ParseError("bad enum".into()))?;
-            let e = rest[..end].to_string();
-            Ok((StepValue::Enum(e), &rest[end + 1..]))
-        }
-        c if c.is_ascii_alphabetic() => {
-            let end = s
-                .find(|c: char| !(c.is_ascii_alphanumeric() || c == '_'))
-                .unwrap_or(s.len());
-            let name = s[..end].to_string();
-            let after = s[end..].trim_start();
-            if after.starts_with('(') {
-                let close = find_matching_paren(after)?;
-                let inner = &after[1..close];
-                let segs = split_top_level(inner);
-                let mut params = Vec::new();
-                for seg in segs {
-                    let seg = seg.trim();
-                    if seg.is_empty() {
-                        continue;
+            '-' | '+' | '0'..='9' => self.parse_number(),
+            _ => {
+                let id = self.parse_identifier()?;
+                self.skip_ws();
+                if self.peek_char(0) == Some('(') {
+                    self.pos += 1;
+                    let inner = self.parse_value_list(')')?;
+                    if inner.len() == 1 {
+                        return Ok(inner.into_iter().next().unwrap());
                     }
-                    let (v, _) = parse_value(seg)?;
-                    params.push(v);
+                    return Ok(StepValue::List(inner));
                 }
-                Ok((StepValue::Entity(name, params), &after[close + 1..]))
-            } else {
-                Ok((StepValue::Entity(name, Vec::new()), after))
+                Ok(StepValue::Enum(id))
             }
         }
-        _ => {
-            let end = s
-                .find(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-' || c == '+' || c == 'e' || c == 'E'))
-                .unwrap_or(s.len());
-            if end == 0 {
-                return Err(IfcError::ParseError(format!("unexpected token: {}", &s[..1])));
+    }
+
+    fn parse_string(&mut self) -> Result<String, IfcError> {
+        self.pos += 1;
+        let mut out = String::new();
+        while self.pos < self.s.len() {
+            let c = self.s[self.pos];
+            if c == '\'' && self.peek_char(1) == Some('\'') {
+                out.push('\'');
+                self.pos += 2;
+                continue;
             }
-            let n: f64 = s[..end]
-                .trim()
-                .parse()
-                .map_err(|_| IfcError::ParseError("bad number".into()))?;
-            Ok((StepValue::Num(n), &s[end..]))
+            if c == '\'' {
+                self.pos += 1;
+                return Ok(out);
+            }
+            out.push(c);
+            self.pos += 1;
+        }
+        Err(IfcError::Parse(self.pos, "unterminated string".into()))
+    }
+
+    fn parse_number(&mut self) -> Result<StepValue, IfcError> {
+        let start = self.pos;
+        if self.peek_char(0) == Some('-') || self.peek_char(0) == Some('+') {
+            self.pos += 1;
+        }
+        let mut is_real = false;
+        while self.pos < self.s.len() {
+            let c = self.s[self.pos];
+            if c.is_ascii_digit() {
+                self.pos += 1;
+            } else if c == '.' {
+                is_real = true;
+                self.pos += 1;
+            } else if c == 'e' || c == 'E' {
+                is_real = true;
+                self.pos += 1;
+                if self.peek_char(0) == Some('-') || self.peek_char(0) == Some('+') {
+                    self.pos += 1;
+                }
+            } else {
+                break;
+            }
+        }
+        let s: String = self.s[start..self.pos].iter().collect();
+        if is_real {
+            s.parse::<f64>()
+                .map(StepValue::Real)
+                .map_err(|_| IfcError::Parse(start, "invalid real".into()))
+        } else {
+            s.parse::<i64>()
+                .map(StepValue::Int)
+                .map_err(|_| IfcError::Parse(start, "invalid integer".into()))
         }
     }
 }
 
-/// Parse the DATA section of a STEP file into instances.
-pub fn parse_step(data: &str) -> Result<Vec<StepInstance>> {
-    let start = data.find("DATA;").ok_or(IfcError::NotStep)?;
-    let data = &data[start..];
-    let mut out = Vec::new();
-    let bytes = data.as_bytes();
-    let mut i = 0;
-    while i < data.len() {
-        if bytes[i] != b'#' {
-            i += 1;
+/// Maps a STEP entity type to a neutral model category.
+fn category_for_type(ty: &str) -> Option<&'static str> {
+    match ty.to_ascii_uppercase().as_str() {
+        "IFCWALL" | "IFCWALLSTANDARDCASE" => Some("Wall"),
+        "IFCSLAB" => Some("Slab"),
+        "IFCCOLUMN" => Some("Column"),
+        "IFCBEAM" | "IFCBEAMSTANDARDCASE" => Some("Beam"),
+        "IFCDOOR" => Some("Door"),
+        "IFCWINDOW" => Some("Window"),
+        "IFCSPACE" => Some("Space"),
+        _ => None,
+    }
+}
+
+/// Convert a parsed STEP document into a neutral [`Project`].
+pub fn to_model(doc: &StepDoc) -> Result<Project, IfcError> {
+    let project_entity = doc
+        .by_type("IFCPROJECT")
+        .into_iter()
+        .next()
+        .ok_or(IfcError::MissingProject)?;
+
+    let project_name = project_entity
+        .str_at(2)
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| "IFC Project".to_string());
+    let project_guid = project_entity.str_at(0).unwrap_or("").to_string();
+
+    let project_id = ProjectId::from_uuid(IdFactory::deterministic(&project_guid));
+    let mut project = Project::new(project_id, project_name);
+
+    for entity in doc.by_type_prefix("IFC") {
+        let Some(category) = category_for_type(&entity.ty) else {
+            continue;
+        };
+        let guid = entity.str_at(0).unwrap_or("").to_string();
+        if guid.is_empty() {
             continue;
         }
-        let start_id = i + 1;
-        let end_id = data[start_id..]
-            .find(|c: char| !c.is_ascii_digit())
-            .map(|p| start_id + p)
-            .unwrap_or(data.len());
-        let id: usize = data[start_id..end_id]
-            .parse()
-            .map_err(|_| IfcError::ParseError("bad instance id".into()))?;
-        i = end_id;
-        while i < data.len() && (bytes[i] == b' ' || bytes[i] == b'=' || bytes[i] == b'\t') {
-            i += 1;
+        let id = IdFactory::deterministic_element(&guid);
+        let name = entity
+            .str_at(2)
+            .filter(|s| !s.is_empty())
+            .unwrap_or(category)
+            .to_string();
+
+        let mut element = Element::new(id, name, category)
+            .with_external_id(ExternalId::IfcGuid(guid.clone()));
+
+        if let Some(storey) = contained_structure_name(doc, entity.id) {
+            element = element.in_storey(storey);
         }
-        let tstart = i;
-        while i < data.len() && (bytes[i].is_ascii_alphanumeric() || bytes[i] == b'_') {
-            i += 1;
-        }
-        let ty = data[tstart..i].to_string();
-        while i < data.len() && (bytes[i] == b' ' || bytes[i] == b'\t') {
-            i += 1;
-        }
-        if i >= data.len() || bytes[i] != b'(' {
-            return Err(IfcError::ParseError(format!("expected '(' after {}", ty)));
-        }
-        let slice = &data[i..];
-        let (params, rest) = {
-            let close = find_matching_paren(slice)?;
-            let inner = &slice[1..close];
-            let segs = split_top_level(inner);
-            let mut items = Vec::new();
-            for seg in segs {
-                let seg = seg.trim();
-                if seg.is_empty() {
-                    continue;
-                }
-                let (v, _) = parse_value(seg)?;
-                items.push(v);
+
+        for (ps_name, props) in property_sets_for(doc, entity.id)? {
+            let mut ps = PropertySet::new(ps_name);
+            for (k, v) in props {
+                ps = ps.with(k, v);
             }
-            (items, &slice[close + 1..])
-        };
-        out.push(StepInstance { id, ty, params });
-        let consumed = slice.len() - rest.len();
-        i += consumed;
-        while i < data.len() && bytes[i] != b';' {
-            i += 1;
+            element = element.with_property_set(ps);
         }
-        i += 1;
+        for (qs_name, quants) in quantity_sets_for(doc, entity.id)? {
+            let mut qs = QuantitySet::new(qs_name);
+            for (k, q) in quants {
+                qs = qs.with(k, q);
+            }
+            element = element.with_quantity_set(qs);
+        }
+
+        project.add_element(element);
+    }
+
+    Ok(project)
+}
+
+/// For an element, find the name of the spatial structure containing it.
+fn contained_structure_name(doc: &StepDoc, element_id: usize) -> Option<String> {
+    for rel in doc.by_type("IFCRELCONTAINEDINSPATIALSTRUCTURE") {
+        // IfcRoot(0..3): GlobalId, OwnerHistory, Name, Description
+        // then RelatedElements(4), RelatingStructure(5)
+        if let Some(list) = rel.list_at(4) {
+            let contains = list.iter().any(|v| matches!(v, StepValue::Ref(r) if *r == element_id));
+            if contains {
+                if let Some(struct_id) = rel.ref_at(5) {
+                    if let Ok(s) = doc.get(struct_id) {
+                        if let Some(n) = s.str_at(2).filter(|n| !n.is_empty()) {
+                            return Some(n.to_string());
+                        }
+                        return Some(format!("#{}", struct_id));
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Collect (property-set-name, [(prop-name, value)]) for an element.
+fn property_sets_for(
+    doc: &StepDoc,
+    element_id: usize,
+) -> Result<Vec<(String, Vec<(String, PropertyValue)>)>, IfcError> {
+    let mut out = Vec::new();
+    for rel in doc.by_type("IFCRELDEFINESBYPROPERTIES") {
+        // RelatedObjects(4), RelatingPropertyDefinition(5)
+        let related: Vec<usize> = rel
+            .list_at(4)
+            .map(|l| {
+                l.iter()
+                    .filter_map(|v| match v {
+                        StepValue::Ref(r) => Some(*r),
+                        _ => None,
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        if !related.contains(&element_id) {
+            continue;
+        }
+        let Some(ps_id) = rel.ref_at(5) else { continue };
+        let ps = doc.get(ps_id)?;
+        if ps.ty != "IFCPROPERTYSET" {
+            continue;
+        }
+        let name = ps.str_at(2).unwrap_or("PropertySet").to_string();
+        let mut props = Vec::new();
+        if let Some(list) = ps.list_at(4) {
+            for v in list {
+                if let StepValue::Ref(pid) = v {
+                    if let Ok(p) = doc.get(*pid) {
+                        if p.ty == "IFCPROPERTYSINGLEVALUE" {
+                            let pname = p.str_at(0).unwrap_or("").to_string();
+                            if let Some(value) = single_value(&p.params) {
+                                props.push((pname, value));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        out.push((name, props));
     }
     Ok(out)
 }
 
-/// A parsed IFC document.
-#[derive(Clone, Debug)]
-pub struct IfcModel {
-    instances: HashMap<usize, StepInstance>,
+/// Extract a single property's value from IfcPropertySingleValue params.
+/// (GlobalId, OwnerHistory, Name, Description, NominalValue, Unit)
+fn single_value(params: &[StepValue]) -> Option<PropertyValue> {
+    let v = params.get(4)?;
+    match v {
+        StepValue::Str(s) => Some(PropertyValue::Text(s.clone())),
+        StepValue::Real(r) => Some(PropertyValue::Number(*r)),
+        StepValue::Int(n) => Some(PropertyValue::Number(*n as f64)),
+        StepValue::Enum(e) => Some(PropertyValue::Text(e.clone())),
+        _ => None,
+    }
 }
 
-impl IfcModel {
-    /// Parse a STEP document into a model.
-    pub fn from_step(data: &str) -> Result<Self> {
-        let instances = parse_step(data)?
-            .into_iter()
-            .map(|i| (i.id, i))
-            .collect();
-        Ok(Self { instances })
-    }
-
-    /// All instances of a given entity type (case-insensitive).
-    pub fn entities_of_type<'a>(&'a self, ty: &'a str) -> impl Iterator<Item = &'a StepInstance> {
-        let t = ty.to_uppercase();
-        self.instances
-            .values()
-            .filter(move |i| i.ty.eq_ignore_ascii_case(&t))
-    }
-
-    /// Resolve a reference to its instance.
-    pub fn instance(&self, id: usize) -> Result<&StepInstance> {
-        self.instances.get(&id).ok_or(IfcError::DanglingRef(id))
-    }
-
-    fn as_str(v: &StepValue) -> Option<&str> {
-        if let StepValue::Str(s) = v {
-            Some(s)
-        } else {
-            None
+/// Collect (quantity-set-name, [(q-name, quantity)]) for an element.
+fn quantity_sets_for(
+    doc: &StepDoc,
+    element_id: usize,
+) -> Result<Vec<(String, Vec<(String, Quantity)>)>, IfcError> {
+    let mut out = Vec::new();
+    for rel in doc.by_type("IFCRELDEFINESBYPROPERTIES") {
+        let related: Vec<usize> = rel
+            .list_at(4)
+            .map(|l| {
+                l.iter()
+                    .filter_map(|v| match v {
+                        StepValue::Ref(r) => Some(*r),
+                        _ => None,
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+        if !related.contains(&element_id) {
+            continue;
         }
-    }
-
-    fn to_number(v: &StepValue) -> Option<f64> {
-        match v {
-            StepValue::Num(n) => Some(*n),
-            StepValue::Entity(_, p) if !p.is_empty() => Self::to_number(&p[0]),
-            _ => None,
+        let Some(qs_id) = rel.ref_at(5) else { continue };
+        let qs = doc.get(qs_id)?;
+        if qs.ty != "IFCELEMENTQUANTITY" {
+            continue;
         }
-    }
-
-    fn to_property_value(v: &StepValue) -> Option<PropertyValue> {
-        match v {
-            StepValue::Str(s) => Some(PropertyValue::Text(s.clone())),
-            StepValue::Num(n) => Some(PropertyValue::Number(*n)),
-            StepValue::Enum(e) => Some(PropertyValue::Text(e.clone())),
-            StepValue::Entity(name, p) if !p.is_empty() => {
-                let n = name.to_uppercase();
-                if n.contains("BOOLEAN") {
-                    let b = matches!(p[0], StepValue::Enum(ref e) if e.eq_ignore_ascii_case("true"));
-                    Some(PropertyValue::Boolean(b))
-                } else if n.contains("MEASURE") || n.contains("REAL") || n.contains("INTEGER") || n.contains("COUNT") {
-                    Self::to_number(v).map(PropertyValue::Number)
-                } else {
-                    Self::to_property_value(&p[0])
-                }
-            }
-            _ => None,
-        }
-    }
-
-    fn extract_property_set(&self, inst: &StepInstance) -> Result<PropertySet> {
-        let name = Self::as_str(inst.params.get(2).unwrap_or(&StepValue::Unset))
-            .unwrap_or("PropertySet")
-            .to_string();
-        let mut ps = PropertySet::new(name);
-        if let Some(StepValue::List(props)) = inst.params.get(4) {
-            for p in props {
-                if let StepValue::Ref(rid) = p {
-                    let pinst = self.instance(*rid)?;
-                    if !pinst.ty.eq_ignore_ascii_case("IfcPropertySingleValue") {
-                        continue;
-                    }
-                    let pname = Self::as_str(pinst.params.get(0).unwrap_or(&StepValue::Unset))
-                        .unwrap_or("")
-                        .to_string();
-                    if let Some(value) = Self::to_property_value(pinst.params.get(2).unwrap_or(&StepValue::Unset)) {
-                        ps = ps.with(pname, value);
-                    }
-                }
-            }
-        }
-        Ok(ps)
-    }
-
-    fn extract_quantity_set(&self, inst: &StepInstance) -> Result<QuantitySet> {
-        let name = Self::as_str(inst.params.get(2).unwrap_or(&StepValue::Unset))
-            .unwrap_or("QuantitySet")
-            .to_string();
-        let mut qs = QuantitySet::new(name);
-        if let Some(StepValue::List(qs_items)) = inst.params.get(5) {
-            for q in qs_items {
-                if let StepValue::Ref(rid) = q {
-                    let qinst = self.instance(*rid)?;
-                    let qname = Self::as_str(qinst.params.get(0).unwrap_or(&StepValue::Unset))
-                        .unwrap_or("")
-                        .to_string();
-                    let value = qinst.params.get(2).unwrap_or(&StepValue::Unset);
-                    let num = Self::to_number(value);
-                    let ty = qinst.ty.to_uppercase();
-                    if let Some(n) = num {
-                        let quantity = if ty.contains("LENGTH") {
-                            Quantity::Length(Length::from_meters(n))
-                        } else if ty.contains("AREA") {
-                            Quantity::Area(Area::from_square_meters(n))
-                        } else if ty.contains("VOLUME") {
-                            Quantity::Volume(Volume::from_cubic_meters(n))
-                        } else if ty.contains("COUNT") {
-                            Quantity::Count(Count::from_each(n))
-                        } else if ty.contains("WEIGHT") {
-                            Quantity::Mass(Mass::from_kilograms(n))
-                        } else {
-                            continue;
-                        };
-                        qs = qs.with(qname, quantity);
-                    }
-                }
-            }
-        }
-        Ok(qs)
-    }
-
-    /// Build a neutral [`Project`] from the parsed IFC.
-    pub fn to_model(&self) -> Result<Project> {
-        let project_inst = self
-            .entities_of_type("IfcProject")
-            .next()
-            .ok_or(IfcError::NoProject)?;
-        let project_name = Self::as_str(project_inst.params.get(2).unwrap_or(&StepValue::Unset))
-            .unwrap_or("IFC Project")
-            .to_string();
-
-        let element_types = [
-            "IfcWall",
-            "IfcWallStandardCase",
-            "IfcSlab",
-            "IfcColumn",
-            "IfcBeam",
-            "IfcDoor",
-            "IfcWindow",
-            "IfcSpace",
-        ];
-
-        let mut element_props: HashMap<usize, Vec<usize>> = HashMap::new();
-        for rel in self.entities_of_type("IfcRelDefinesByProperties") {
-            let related = rel.params.get(4);
-            let relating = rel.params.get(5);
-            let mut def_ids = Vec::new();
-            if let Some(StepValue::Ref(r)) = relating {
-                def_ids.push(*r);
-            } else if let Some(StepValue::List(items)) = relating {
-                for it in items {
-                    if let StepValue::Ref(r) = it {
-                        def_ids.push(*r);
-                    }
-                }
-            }
-            let mut obj_ids = Vec::new();
-            if let Some(StepValue::List(items)) = related {
-                for it in items {
-                    if let StepValue::Ref(r) = it {
-                        obj_ids.push(*r);
-                    }
-                }
-            }
-            for o in obj_ids {
-                element_props.entry(o).or_default().extend(def_ids.iter().copied());
-            }
-        }
-
-        let mut project = Project::new(ProjectId::nil(), project_name)
-            .with_default_system(ClassificationSystem::MasterFormat);
-
-        for ty in element_types {
-            for inst in self.entities_of_type(ty) {
-                let name = Self::as_str(inst.params.get(2).unwrap_or(&StepValue::Unset))
-                    .unwrap_or(ty)
-                    .to_string();
-                let eid = IdFactory::deterministic_element(&format!("#{}", inst.id));
-                let mut element =
-                    Element::new(eid, name, inst.ty.clone()).with_external_id(
-                        tpt_c_ids::ExternalId::IfcGuid(
-                            Self::as_str(inst.params.get(0).unwrap_or(&StepValue::Unset))
-                                .unwrap_or("")
-                                .to_string(),
-                        ),
-                    );
-                if let Some(defs) = element_props.get(&inst.id) {
-                    for d in defs {
-                        let dinst = self.instance(*d)?;
-                        if dinst.ty.eq_ignore_ascii_case("IfcPropertySet") {
-                            element = element.with_property_set(self.extract_property_set(dinst)?);
-                        } else if dinst.ty.eq_ignore_ascii_case("IfcElementQuantity") {
-                            element = element.with_quantity_set(self.extract_quantity_set(dinst)?);
+        let name = qs.str_at(2).unwrap_or("Quantities").to_string();
+        let mut quants = Vec::new();
+        for param in &qs.params {
+            if let StepValue::List(list) = param {
+                for v in list {
+                    if let StepValue::Ref(qid) = v {
+                        if let Ok(q) = doc.get(*qid) {
+                            if let Some((qname, q)) = extract_quantity(q) {
+                                quants.push((qname, q));
+                            }
                         }
                     }
                 }
-                project.add_element(element);
             }
         }
-
-        Ok(project)
+        if !quants.is_empty() {
+            out.push((name, quants));
+        }
     }
+    Ok(out)
+}
+
+/// Extract a single quantity from an IfcQuantity* entity.
+/// (GlobalId, OwnerHistory, Name, Description, Value)
+fn extract_quantity(q: &StepEntity) -> Option<(String, Quantity)> {
+    let name = q.str_at(2).unwrap_or("").to_string();
+    let value = match q.ty.as_str() {
+        "IFCQUANTITYLENGTH" => q.real_at(4).map(|v| Quantity::Length(Length::from_meters(v))),
+        "IFCQUANTITYAREA" => q.real_at(4).map(|v| Quantity::Area(Area::from_square_meters(v))),
+        "IFCQUANTITYVOLUME" => q.real_at(4).map(|v| Quantity::Volume(Volume::from_cubic_meters(v))),
+        "IFCQUANTITYCOUNT" => q.real_at(4).map(|v| Quantity::Count(Count::from_each(v))),
+        "IFCQUANTITYWEIGHT" => q.real_at(4).map(|v| Quantity::Mass(Mass::from_kilograms(v))),
+        _ => None,
+    }?;
+    Some((name, value))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const SAMPLE: &str = r#"ISO-10303-21;
+    const SAMPLE: &str = r#"
+ISO-10303-21;
 HEADER;
-FILE_DESCRIPTION(('ViewDefinition'),'2;1');
-FILE_NAME('sample.ifc','2026-01-01T00:00:00',('TPT'),(''),'','','');
-FILE_SCHEMA(('IFC4'));
+FILE_DESCRIPTION(('ViewDefinition [CoordinationView]'),'2;1');
+FILE_NAME('sample.ifc','2026-01-01T00:00:00',('TPT'),('TPT'),'','','');
+FILE_SCHEMA(('IFC2X3'));
 ENDSEC;
 DATA;
-#1=IFCPROJECT('0YvctvNInA9g7gQ9yzQzvZ',$,'Demo Project',$,$,$,$,$,$);
-#2=IFCPROPERTYSET('2O0MLfx3BDgvhRaydMkJh7',$,'Pset_WallCommon',$,(#5));
-#5=IFCPROPERTYSINGLEVALUE('IsExternal',$,IFCBOOLEAN(.TRUE.),$);
-#6=IFCELEMENTQUANTITY('3O0MLfx3BDgvhRaydMkJh8',$,'BaseQuantities',$,$,(#7));
-#7=IFCQUANTITYLENGTH('Length',$,IFCLENGTHMEASURE(10.));
-#10=IFCWALLSTANDARDCASE('1O0MLfx3BDgvhRaydMkJh0',$,'West Wall',$,$,$,$,$);
-#11=IFCRELDEFINESBYPROPERTIES('4O0MLfx3BDgvhRaydMkJh1',$,$,$,(#10),#2);
-#12=IFCRELDEFINESBYPROPERTIES('5O0MLfx3BDgvhRaydMkJh2',$,$,$,(#10),#6);
+#1=IFCPROJECT('0YcC700kj2vxrGBVxoQqhl',$,'Demo Project',$,$,$,$,$,$);
+#2=IFCSITE('3O0MLfx3BDgvhRaydMkJh6',$,'Site',$,$,$,$,$,$,$,$,$,$,$);
+#3=IFCBUILDING('1a2b3c4d5e6f7g8h9i0j',$,'Building',$,$,$,$,$,$,$);
+#10=IFCBUILDINGSTOREY('storey-1',$,'Level 1',$,$,$,$,$,100.);
+#20=IFCWALL('wall-1',$,'East Wall',$,$,$,$,$,$,$);
+#21=IFCSLAB('slab-1',$,'Floor Slab',$,$,$,$,$,$,$);
+#30=IFCPROPERTYSET('ps-1',$,'Pset_WallCommon',$,(#31));
+#31=IFCPROPERTYSINGLEVALUE('LoadBearing',$,'YES',$,$);
+#40=IFCELEMENTQUANTITY('q-1',$,'BaseQuantities',$,(#41,#42));
+#41=IFCQUANTITYLENGTH('Length',$,$,$,20.);
+#42=IFCQUANTITYVOLUME('GrossVolume',$,$,$,5.);
+#50=IFCRELAGGREGATES('agg-1',$,#1,(#2));
+#51=IFCRELAGGREGATES('agg-2',$,#2,(#3));
+#52=IFCRELAGGREGATES('agg-3',$,#3,(#10));
+#60=IFCRELCONTAINEDINSPATIALSTRUCTURE('rel-1',$,(#20,#21),$,#10);
+#70=IFCRELDEFINESBYPROPERTIES('relp-1',$,(#20),$,#30);
+#71=IFCRELDEFINESBYPROPERTIES('relp-2',$,(#20,#21),$,#40);
 ENDSEC;
 END-ISO-10303-21;
 "#;
 
     #[test]
     fn parse_and_map() {
-        let model = IfcModel::from_step(SAMPLE).unwrap();
-        let project = model.to_model().unwrap();
+        let doc = parse(SAMPLE).expect("parse");
+        assert_eq!(doc.by_type("IFCWALL").len(), 1);
+        let project = to_model(&doc).expect("map");
         assert_eq!(project.name, "Demo Project");
-        assert_eq!(project.element_count(), 1);
-        let wall = &project.elements[0];
-        assert_eq!(wall.name, "West Wall");
-        assert!(wall.property_sets.iter().any(|p| p.name == "Pset_WallCommon"));
-        let ps = wall.property_sets.iter().find(|p| p.name == "Pset_WallCommon").unwrap();
-        let ext = ps.properties.iter().find(|p| p.name == "IsExternal").unwrap();
-        assert_eq!(ext.value, PropertyValue::Boolean(true));
-        let qs = wall.quantity_sets.iter().find(|q| q.name == "BaseQuantities").unwrap();
-        assert_eq!(qs.quantities[0].quantity, Quantity::Length(Length::from_meters(10.0)));
+        assert_eq!(project.element_count(), 2);
+        let wall = project.elements.iter().find(|e| e.category == "Wall").unwrap();
+        assert_eq!(wall.storey_id.as_deref(), Some("Level 1"));
+        assert!(wall.property_sets.iter().any(|ps| ps.name == "Pset_WallCommon"));
+        let qs = wall.quantity_sets.first().unwrap();
+        assert_eq!(qs.name, "BaseQuantities");
+        assert_eq!(qs.quantities.len(), 2);
+        let slab = project.elements.iter().find(|e| e.category == "Slab").unwrap();
+        assert!(slab.quantity_sets.iter().any(|qs| qs.name == "BaseQuantities"));
+    }
+
+    #[test]
+    fn string_escaping_and_reals() {
+        let src = "ISO-10303-21;\nHEADER;ENDSEC;\nDATA;\n#1=IFCTEST('it''s a wall',$,12.5,$,(#2,#3));\nENDSEC;\nEND-ISO-10303-21;\n";
+        let doc = parse(src).unwrap();
+        let e = doc.get(1).unwrap();
+        assert_eq!(e.str_at(0), Some("it's a wall"));
+        assert_eq!(e.real_at(2), Some(12.5));
+        assert_eq!(e.list_at(4).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn rejects_garbage() {
+        assert!(parse("not a step file").is_err());
     }
 }

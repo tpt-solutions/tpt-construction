@@ -5,11 +5,16 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "Run a sample CPM schedule end-to-end"
 publish = false
+description = "Phase 4 integration example: run a sample CPM schedule and Monte Carlo risk analysis end-to-end"
 
 [dependencies]
 tpt-c-core.workspace = true
+tpt-c-schedule.workspace = true
+tpt-c-risk.workspace = true
+tpt-c-earned-value.workspace = true
+tpt-c-ids.workspace = true
+tpt-c-units.workspace = true
 
 [lints]
 workspace = true

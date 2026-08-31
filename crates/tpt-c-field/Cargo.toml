@@ -1,0 +1,18 @@
+[package]
+name = "tpt-c-field"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Field execution records: daily logs, field reports, work records, manpower, weather, and site observations"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ids.workspace = true

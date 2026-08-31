@@ -55,18 +55,18 @@ impl NaiveDate {
     /// Days since 1970-01-01 (Hinnant's civil algorithm).
     pub fn to_ordinal(self) -> i64 {
         let y = if self.month <= 2 {
-            self.year - 1
+            self.year as i64 - 1
         } else {
-            self.year
+            self.year as i64
         };
         let era = if y >= 0 { y } else { y - 399 } / 400;
         let yoe = y - era * 400;
         let mp = if self.month > 2 {
-            self.month - 3
+            self.month as i64 - 3
         } else {
-            self.month + 9
+            self.month as i64 + 9
         };
-        let doy = (153 * mp as i64 + 2) / 5 + self.day as i64 - 1;
+        let doy = (153 * mp + 2) / 5 + self.day as i64 - 1;
         let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
         era * 146097 + doe - 719468
     }
@@ -129,7 +129,10 @@ impl FromStr for NaiveDate {
         if parts.len() != 3 {
             return Err(ScheduleError::InvalidDate(s.to_string()));
         }
-        let parse = |p: &str| p.parse::<i32>().map_err(|_| ScheduleError::InvalidDate(s.to_string()));
+        let parse = |p: &str| {
+            p.parse::<i32>()
+                .map_err(|_| ScheduleError::InvalidDate(s.to_string()))
+        };
         let year = parse(parts[0])?;
         let month = parse(parts[1])? as u32;
         let day = parse(parts[2])? as u32;
@@ -166,7 +169,10 @@ mod tests {
         let d = NaiveDate::new(2024, 1, 31);
         assert_eq!(d.next_day(), NaiveDate::new(2024, 2, 1));
         assert_eq!(d.add_days(1), NaiveDate::new(2024, 2, 1));
-        assert_eq!(NaiveDate::new(2024, 3, 1).add_days(-1), NaiveDate::new(2024, 2, 29));
+        assert_eq!(
+            NaiveDate::new(2024, 3, 1).add_days(-1),
+            NaiveDate::new(2024, 2, 29)
+        );
     }
 
     #[test]

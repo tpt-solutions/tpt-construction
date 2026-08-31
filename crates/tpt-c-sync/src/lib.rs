@@ -75,7 +75,7 @@ impl<T: Clone> LwwRegister<T> {
 
 /// A grow-only set: an element, once added, is never removed. Merging is set
 /// union.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct GSet<T> {
     members: HashSet<T>,
 }
@@ -136,7 +136,7 @@ pub struct OrTag(pub String);
 /// Each `add` mints a unique tag; an element is present if it has at least one
 /// tag that has not been observed-removed. `remove` tombstones every tag of the
 /// element that was *observed* by the caller (add-wins semantics).
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct OrSet<T> {
     /// Live tags per element.
     added: HashMap<T, HashSet<OrTag>>,
@@ -236,7 +236,7 @@ pub struct SyncReport {
 }
 
 /// A local-first replica holding keyed LWW registers with a pending out-queue.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct Replica<K, V> {
     actor: String,
     clock: u64,
@@ -314,13 +314,12 @@ where
     /// Merge a batch of remote operations into local state.
     fn merge_remote(&mut self, ops: Vec<SyncOp<K, V>>) {
         for op in ops {
-            if let SyncOp::Put { key, register } = op {
-                self.clock = self.clock.max(register.ts.counter);
-                match self.state.get_mut(&key) {
-                    Some(existing) => existing.merge(&register),
-                    None => {
-                        self.state.insert(key, register);
-                    }
+            let SyncOp::Put { key, register } = op;
+            self.clock = self.clock.max(register.ts.counter);
+            match self.state.get_mut(&key) {
+                Some(existing) => existing.merge(&register),
+                None => {
+                    self.state.insert(key, register);
                 }
             }
         }

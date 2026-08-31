@@ -40,9 +40,9 @@ pub enum WorkflowKind {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TransitionRecord {
     /// State left.
-    pub from: &'static str,
+    pub from: String,
     /// State entered.
-    pub to: &'static str,
+    pub to: String,
     /// When and by whom.
     pub at: AuditMeta,
 }
@@ -86,8 +86,8 @@ impl<S: StateName> WorkflowInstance<S> {
         let from = self.machine.current();
         self.machine.transition(to)?;
         self.history.push(TransitionRecord {
-            from: from.state_name(),
-            to: to.state_name(),
+            from: from.state_name().to_string(),
+            to: to.state_name().to_string(),
             at,
         });
         Ok(())

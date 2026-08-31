@@ -13,6 +13,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tpt_c_core::{ElementId, EstimateId, ModelId, RFIId, ScheduleId, SubmittalId};
+use tpt_c_ids::IdFactory;
 use uuid::Uuid;
 
 /// A domain event capturing a meaningful state change.
@@ -142,7 +143,7 @@ impl<E> EventStore<E> {
         let seq = (self.events.len() as u64) + 1;
         self.events.push(StoredEvent {
             seq,
-            event_id: Uuid::new_v4(),
+            event_id: IdFactory::uuid7(),
             occurred_at: at.into(),
             actor: actor.into(),
             event,
@@ -287,9 +288,9 @@ mod tests {
 
     fn sample_store() -> AuditTrail {
         let mut s: AuditTrail = EventStore::new();
-        let model = IdFactory::deterministic("m1").into();
+        let model = ModelId::from_uuid(IdFactory::deterministic("m1"));
         let est = IdFactory::estimate();
-        let rfi = IdFactory::deterministic("rfi1").into();
+        let rfi = RFIId::from_uuid(IdFactory::deterministic("rfi1"));
         s.append(
             DomainEvent::ModelImported {
                 model_id: model,

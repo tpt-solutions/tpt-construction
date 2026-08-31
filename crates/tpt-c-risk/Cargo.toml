@@ -5,9 +5,18 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "Schedule/cost risk analysis (Monte Carlo) for construction uncertainty"
+description = "Construction schedule and cost risk: Monte Carlo simulation, weather and productivity uncertainty"
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+tpt-c-core.workspace = true
+tpt-c-schedule.workspace = true
+tpt-c-units.workspace = true
+
+[dev-dependencies]
+tpt-c-ids.workspace = true
+uuid.workspace = true
 
 [lints]
 workspace = true
-
-[dependencies]

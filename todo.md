@@ -105,19 +105,19 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 
 ## Phase 4: Scheduling
 ### tpt-c-schedule
-- [ ] Scaffold crate
-- [ ] Activities, relationships (FS/SS/FF/SF), constraints, calendars, durations, lag/lead
-- [ ] CPM engine, float, baselines, actuals
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] Activities, relationships (FS/SS/FF/SF), constraints, calendars, durations, lag/lead
+- [x] CPM engine, float, baselines, actuals
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-risk
-- [ ] Scaffold crate (depends on tpt-math-prob-dist, tpt-c-schedule, tpt-c-estimating)
-- [ ] Schedule/cost risk, Monte Carlo simulation, weather risk, productivity uncertainty
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate (self-contained prob module stands in for tpt-math-prob-dist; does not depend on the absent tpt-c-estimating)
+- [x] Schedule/cost risk, Monte Carlo simulation, weather risk, productivity uncertainty
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-earned-value
-- [ ] Scaffold crate
-- [ ] EVM: SPI, CPI, TCPI, BCWS, BCWP, ACWP
-- [ ] Unit tests + rustdoc + SPDX header
-- [ ] Phase 4 integration check: `examples/cpm-schedule` runs a sample CPM schedule end-to-end
+- [x] Scaffold crate
+- [x] EVM: SPI, CPI, TCPI, BCWS, BCWP, ACWP
+- [x] Unit tests + rustdoc + SPDX header
+- [x] Phase 4 integration check: `examples/cpm-schedule` runs a sample CPM schedule end-to-end
 
 ## Phase 5: Civil and Earthwork
 ### tpt-c-earthwork
@@ -163,22 +163,22 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 
 ## Phase 7: Equipment and Sync
 ### tpt-c-equipment
-- [ ] Scaffold crate
-- [ ] Equipment registry, utilization tracking, fuel tracking, idle time, maintenance triggers, telematics events (J1939 CAN bus, OEM telematics, GPS, fuel/maintenance logs)
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] Equipment registry, utilization tracking, fuel tracking, idle time, maintenance triggers, telematics events (J1939 CAN bus, OEM telematics, GPS, fuel/maintenance logs)
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-sync
-- [ ] Scaffold crate
-- [ ] Offline-first sync, local storage, conflict resolution, CRDTs, connectivity resilience
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] Offline-first sync, local storage, conflict resolution, CRDTs, connectivity resilience
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-events
-- [ ] Scaffold crate
-- [ ] Domain events, audit trail, event sourcing, projections, replay (ModelImported, QuantityAdjusted, CostItemApplied, EstimateApproved, ScheduleUpdated, RFICreated, RFIAnswered, SubmittalApproved, PaymentApplicationSubmitted)
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] Domain events, audit trail, event sourcing, projections, replay (ModelImported, QuantityAdjusted, CostItemApplied, EstimateApproved, ScheduleUpdated, RFICreated, RFIAnswered, SubmittalApproved, PaymentApplicationSubmitted)
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-db
-- [ ] Scaffold crate
-- [ ] Persistence patterns: PostgreSQL, SQLite, migrations, repositories
-- [ ] Unit tests + rustdoc + SPDX header
-- [ ] Phase 7 integration check: `examples/field-offline-sync` demonstrates offline write + resync
+- [x] Scaffold crate
+- [x] Persistence patterns: PostgreSQL, SQLite, migrations, repositories
+- [x] Unit tests + rustdoc + SPDX header
+- [x] Phase 7 integration check: `examples/field-offline-sync` demonstrates offline write + resync
 
 ## Phase 8: Facility Management and Digital Twins
 ### tpt-c-fm

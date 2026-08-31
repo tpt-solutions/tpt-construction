@@ -83,8 +83,13 @@ mod tests {
 
     #[test]
     fn resource_rate_builder() {
-        let r = ResourceRate::new("r1", ResourceKind::Labor, RateUnit::Hour, Money::new(75.0, "USD"))
-            .with_description("Journeyman");
+        let r = ResourceRate::new(
+            "r1",
+            ResourceKind::Labor,
+            RateUnit::Hour,
+            Money::new(75.0, "USD"),
+        )
+        .with_description("Journeyman");
         assert_eq!(r.rate.amount(), 75.0);
         assert_eq!(r.description, "Journeyman");
     }

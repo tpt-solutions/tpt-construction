@@ -46,29 +46,38 @@ impl Money {
 
     /// Round to `decimals` places (default-style half-away-from-zero).
     pub fn rounded(self, decimals: u32) -> Self {
-        Self::new(round_to_decimals(self.amount, decimals), self.currency.clone())
+        Self::new(
+            round_to_decimals(self.amount, decimals),
+            self.currency.clone(),
+        )
     }
 
     /// Add two amounts, requiring the same currency.
-    pub fn checked_add(self, other: Money) -> Result<Money, CostError> {
+    pub fn checked_add(&self, other: Money) -> Result<Money, CostError> {
         if self.currency != other.currency {
             return Err(CostError::CurrencyMismatch {
-                lhs: self.currency,
+                lhs: self.currency.clone(),
                 rhs: other.currency,
             });
         }
-        Ok(Money::new(self.amount + other.amount, self.currency))
+        Ok(Money::new(
+            self.amount + other.amount,
+            self.currency.clone(),
+        ))
     }
 
     /// Subtract two amounts, requiring the same currency.
-    pub fn checked_sub(self, other: Money) -> Result<Money, CostError> {
+    pub fn checked_sub(&self, other: Money) -> Result<Money, CostError> {
         if self.currency != other.currency {
             return Err(CostError::CurrencyMismatch {
-                lhs: self.currency,
+                lhs: self.currency.clone(),
                 rhs: other.currency,
             });
         }
-        Ok(Money::new(self.amount - other.amount, self.currency))
+        Ok(Money::new(
+            self.amount - other.amount,
+            self.currency.clone(),
+        ))
     }
 
     /// Scale by a dimensionless factor (e.g. a quantity or a percentage).
@@ -80,14 +89,16 @@ impl Money {
 impl std::ops::Add for Money {
     type Output = Money;
     fn add(self, rhs: Money) -> Money {
-        self.checked_add(rhs).expect("Money::Add requires matching currencies")
+        self.checked_add(rhs)
+            .expect("Money::Add requires matching currencies")
     }
 }
 
 impl std::ops::Sub for Money {
     type Output = Money;
     fn sub(self, rhs: Money) -> Money {
-        self.checked_sub(rhs).expect("Money::Sub requires matching currencies")
+        self.checked_sub(rhs)
+            .expect("Money::Sub requires matching currencies")
     }
 }
 

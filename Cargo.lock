@@ -3,6 +3,30 @@
 version = 4
 
 [[package]]
+name = "adler2"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa"
+
+[[package]]
+name = "aho-corasick"
+version = "1.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c982642fa9e8606056828ee9a8505737230110bb1099153c79efe865c59d12ba"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "arbitrary"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
+dependencies = [
+ "derive_arbitrary",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -13,6 +37,122 @@ name = "cfg-if"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
+
+[[package]]
+name = "cpm-schedule"
+version = "0.1.0"
+dependencies = [
+ "tpt-c-core",
+ "tpt-c-earned-value",
+ "tpt-c-ids",
+ "tpt-c-risk",
+ "tpt-c-schedule",
+ "tpt-c-units",
+]
+
+[[package]]
+name = "crc32fast"
+version = "1.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8498c871161e1742aaa9d52551b2d6ebdd4c3d45a3be423e3728f33b955be550"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
+name = "crossbeam-utils"
+version = "0.8.22"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61803da095bee82a81bb1a452ecc25d3b2f1416d1897eb86430c6159ef717c17"
+
+[[package]]
+name = "csv"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "52cd9d68cf7efc6ddfaaee42e7288d3a99d613d4b50f76ce9827ae0c6e14f938"
+dependencies = [
+ "csv-core",
+ "itoa",
+ "ryu",
+ "serde_core",
+]
+
+[[package]]
+name = "csv-core"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "704a3c26996a80471189265814dbc2c257598b96b8a7feae2d31ace646bb9782"
+dependencies = [
+ "memchr",
+]
+
+[[package]]
+name = "derive_arbitrary"
+version = "1.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e567bd82dcff979e4b03460c307b3cdc9e96fde3d73bed1496d2bc75d9dd62a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "displaydoc"
+version = "0.2.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6232dd377dcc64799954cbd3a9bb882e9cdc1308ccd87b1c098f1fb2eaf82a8"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.4",
+]
+
+[[package]]
+name = "equivalent"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
+
+[[package]]
+name = "estimate-export"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-csv",
+ "tpt-c-estimating",
+ "tpt-c-model",
+ "tpt-c-quantities",
+ "tpt-c-xlsx",
+]
+
+[[package]]
+name = "field-execution-e2e"
+version = "0.1.0"
+dependencies = [
+ "tpt-c-contracts",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-documents",
+ "tpt-c-field",
+ "tpt-c-ids",
+ "tpt-c-payapps",
+ "tpt-c-safety",
+ "tpt-c-workflow",
+ "uuid",
+]
+
+[[package]]
+name = "flate2"
+version = "1.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e634e2e0ebac1ee034020da1ca582e17ffe4e0f5e985823721e168928136dcb"
+dependencies = [
+ "crc32fast",
+ "miniz_oxide",
+]
 
 [[package]]
 name = "futures-core"
@@ -50,10 +190,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashbrown"
+version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
+
+[[package]]
 name = "ifc-import"
 version = "0.1.0"
 dependencies = [
- "tpt-c-core",
+ "tpt-c-ifc",
+ "tpt-c-model",
+]
+
+[[package]]
+name = "indexmap"
+version = "2.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "07aa2048142242915a31d35844fb311e0e53fcca590c3a0a40dcf1b841fa09eb"
+dependencies = [
+ "equivalent",
+ "hashbrown",
 ]
 
 [[package]]
@@ -80,10 +237,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
 
 [[package]]
+name = "log"
+version = "0.4.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6"
+
+[[package]]
 name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
+
+[[package]]
+name = "miniz_oxide"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b63fbc4a50860e98e7b2aa7804ded1db5cbc3aff9193adaff57a6931bf7c4b4c"
+dependencies = [
+ "adler2",
+ "simd-adler32",
+]
 
 [[package]]
 name = "once_cell"
@@ -107,6 +280,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "quantity-takeoff"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tpt-c-core",
+ "tpt-c-model",
+ "tpt-c-quantities",
+ "tpt-c-units",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -122,10 +306,55 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 
 [[package]]
+name = "regex"
+version = "1.13.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f020237b6c8eed93db2e2cb53c00c60a8e1bc73da7d073199a1180401450218d"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-automata",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-automata"
+version = "0.4.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad8553b9b26413251cbf30e620595c7a41b3887f03da04579c0e6b0d6a06b4b2"
+dependencies = [
+ "aho-corasick",
+ "memchr",
+ "regex-syntax",
+]
+
+[[package]]
+name = "regex-syntax"
+version = "0.8.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
+
+[[package]]
+name = "rust_xlsxwriter"
+version = "0.73.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4850a507b7ecd741796f7dfb87dbe63f6ed25c5ddb45d3d61bc6c464ef652db6"
+dependencies = [
+ "regex",
+ "zip",
+]
+
+[[package]]
 name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
+name = "ryu"
+version = "1.0.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9774ba4a74de5f7b1c1451ed6cd5285a32eddb5cccb8cc655a4e50009e06477f"
 
 [[package]]
 name = "serde"
@@ -177,6 +406,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
+name = "simd-adler32"
+version = "0.3.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
+
+[[package]]
 name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -225,6 +460,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-csv",
+ "tpt-c-estimating",
+ "tpt-c-model",
+ "tpt-c-quantities",
+ "tpt-c-xlsx",
+]
+
+[[package]]
 name = "tpt-c-bcf"
 version = "0.1.0"
 dependencies = [
@@ -240,11 +489,100 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-c-contracts"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-workflow",
+ "uuid",
+]
+
+[[package]]
 name = "tpt-c-core"
 version = "0.1.0"
 dependencies = [
  "serde",
  "thiserror",
+ "uuid",
+]
+
+[[package]]
+name = "tpt-c-cost"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-classification",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-model",
+ "tpt-c-units",
+]
+
+[[package]]
+name = "tpt-c-csv"
+version = "0.1.0"
+dependencies = [
+ "csv",
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-ids",
+ "tpt-c-model",
+ "tpt-c-units",
+]
+
+[[package]]
+name = "tpt-c-documents"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-workflow",
+ "uuid",
+]
+
+[[package]]
+name = "tpt-c-earned-value"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+]
+
+[[package]]
+name = "tpt-c-estimating"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tpt-c-classification",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-csv",
+ "tpt-c-ids",
+ "tpt-c-model",
+ "tpt-c-quantities",
+ "tpt-c-units",
+ "tpt-c-xlsx",
+]
+
+[[package]]
+name = "tpt-c-field"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-ids",
  "uuid",
 ]
 
@@ -310,10 +648,96 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-c-payapps"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-ids",
+ "uuid",
+]
+
+[[package]]
+name = "tpt-c-quantities"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-classification",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-model",
+ "tpt-c-units",
+]
+
+[[package]]
+name = "tpt-c-risk"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-schedule",
+ "tpt-c-units",
+ "uuid",
+]
+
+[[package]]
+name = "tpt-c-safety"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "uuid",
+]
+
+[[package]]
+name = "tpt-c-schedule"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-ids",
+ "tpt-c-units",
+ "uuid",
+]
+
+[[package]]
 name = "tpt-c-units"
 version = "0.1.0"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "tpt-c-workflow"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tpt-c-core",
+ "uuid",
+]
+
+[[package]]
+name = "tpt-c-xlsx"
+version = "0.1.0"
+dependencies = [
+ "rust_xlsxwriter",
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-estimating",
+ "tpt-c-model",
+ "tpt-c-units",
 ]
 
 [[package]]
@@ -381,7 +805,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "zip"
+version = "2.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fabe6324e908f85a1c52063ce7aa26b68dcb7eb6dbc83a2d148403c9bc3eba50"
+dependencies = [
+ "arbitrary",
+ "crc32fast",
+ "crossbeam-utils",
+ "displaydoc",
+ "flate2",
+ "indexmap",
+ "memchr",
+ "thiserror",
+ "zopfli",
+]
+
+[[package]]
 name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
+
+[[package]]
+name = "zopfli"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f05cd8797d63865425ff89b5c4a48804f35ba0ce8d125800027ad6017d2b5249"
+dependencies = [
+ "bumpalo",
+ "crc32fast",
+ "log",
+ "simd-adler32",
+]

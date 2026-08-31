@@ -1,0 +1,26 @@
+[package]
+name = "tpt"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "TPT Construction CLI: estimate, takeoff, and export workflows"
+publish = false
+
+[dependencies]
+serde_json.workspace = true
+tpt-c-core.workspace = true
+tpt-c-model.workspace = true
+tpt-c-quantities.workspace = true
+tpt-c-cost.workspace = true
+tpt-c-estimating.workspace = true
+tpt-c-csv.workspace = true
+tpt-c-xlsx.workspace = true
+
+[[bin]]
+name = "tpt"
+path = "src/main.rs"
+
+[lints]
+workspace = true

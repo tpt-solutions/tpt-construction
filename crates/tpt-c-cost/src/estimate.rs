@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use tpt_c_core::{EstimateId, Identified};
 use tpt_c_ids::IdFactory;
 
-use crate::{CostError, LineItem, Money, round_money};
+use crate::{round_money, CostError, LineItem, Money};
 
 /// Markup percentages applied to an estimate subtotal.
 ///
@@ -164,7 +164,9 @@ impl Estimate {
     pub fn subtotal(&self) -> Result<Money, CostError> {
         self.line_items
             .iter()
-            .try_fold(Money::zero(&self.currency), |acc, l| acc.checked_add(l.extension))
+            .try_fold(Money::zero(&self.currency), |acc, l| {
+                acc.checked_add(l.extension.clone())
+            })
     }
 
     /// Subtotal with the full markup schedule applied.
@@ -204,21 +206,23 @@ pub struct Budget {
 impl Budget {
     /// Build a budget with a contingency percentage.
     pub fn new(allowance: Money, contingency_pct: f64) -> Self {
-        let contingency = allowance.scaled(contingency_pct / 100.0).rounded(2);
-        let total = (allowance + contingency).rounded(2);
+        let cur = allowance.currency().to_string();
+        let a = allowance.amount();
+        let contingency = round_money(a * contingency_pct / 100.0);
+        let total = round_money(a + contingency);
         Self {
-            currency: allowance.currency().to_string(),
-            allowance: allowance.rounded(2),
+            currency: cur.clone(),
+            allowance: Money::new(round_money(a), cur.clone()),
             contingency_pct,
-            contingency,
-            total,
+            contingency: Money::new(contingency, cur.clone()),
+            total: Money::new(total, cur),
         }
     }
 
     /// Compare an estimate total against this budget, returning the delta
     /// (`budget.total - estimate_total`); positive means under budget.
     pub fn variance(&self, estimate_total: Money) -> Result<Money, CostError> {
-        self.total.checked_sub(estimate_total)
+        self.total.clone().checked_sub(estimate_total)
     }
 }
 

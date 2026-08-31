@@ -11,8 +11,14 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use tpt_c_core::{AssetId, ElementId, EstimateId};
 use uuid::Uuid;
+
+/// Core domain identifiers re-exported for convenience.
+pub use tpt_c_core::{
+    AssetId, ChangeOrderId, ClaimId, ContractId, ContractItemId, DocumentId, ElementId,
+    EstimateId, IssueId, NoticeId, PaymentApplicationId, ProjectId, PunchListId, RFIId,
+    SafetyIncidentId, SubmittalId, TransmittalId,
+};
 
 /// Fixed namespace used for deterministic (UUIDv5) identifier derivation.
 ///

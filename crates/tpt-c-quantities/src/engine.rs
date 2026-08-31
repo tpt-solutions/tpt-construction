@@ -64,48 +64,57 @@ impl TakeoffEngine {
             }
         }
 
-        let has = |qs: &[TakeoffQuantity], n: &str| {
-            qs.iter().any(|q| q.name.eq_ignore_ascii_case(n))
-        };
+        let has =
+            |qs: &[TakeoffQuantity], n: &str| qs.iter().any(|q| q.name.eq_ignore_ascii_case(n));
+        let has_kind =
+            |qs: &[TakeoffQuantity], k: QuantityKind| qs.iter().any(|q| q.net.kind() == k);
 
-        if let Some(v) = concrete_volume(element) {
-            if !has(&quantities, "ConcreteVolume") {
-                quantities.push(TakeoffQuantity {
-                    name: "ConcreteVolume",
-                    net: MeasuredQuantity::Volume(v),
-                    waste: self.rules.concrete_waste(&element.category),
-                    manual: false,
-                });
+        // Derived quantities are only added when a quantity of that kind is not
+        // already present (a stored volume avoids a duplicate derived volume, etc.).
+        if !has_kind(&quantities, QuantityKind::Volume) {
+            if let Some(v) = concrete_volume(element) {
+                if !has(&quantities, "ConcreteVolume") {
+                    quantities.push(TakeoffQuantity {
+                        name: "ConcreteVolume",
+                        net: MeasuredQuantity::Volume(v),
+                        waste: self.rules.concrete_waste(&element.category),
+                        manual: false,
+                    });
+                }
             }
         }
-        if let Some(a) = formwork_area(element) {
-            if !has(&quantities, "FormworkArea") {
-                quantities.push(TakeoffQuantity {
-                    name: "FormworkArea",
-                    net: MeasuredQuantity::Area(a),
-                    waste: self.rules.formwork_waste(&element.category),
-                    manual: false,
-                });
+        if !has_kind(&quantities, QuantityKind::Area) {
+            if let Some(a) = formwork_area(element) {
+                if !has(&quantities, "FormworkArea") {
+                    quantities.push(TakeoffQuantity {
+                        name: "FormworkArea",
+                        net: MeasuredQuantity::Area(a),
+                        waste: self.rules.formwork_waste(&element.category),
+                        manual: false,
+                    });
+                }
+            }
+            if let Some(a) = paint_area(element) {
+                if !has(&quantities, "PaintArea") {
+                    quantities.push(TakeoffQuantity {
+                        name: "PaintArea",
+                        net: MeasuredQuantity::Area(a),
+                        waste: self.rules.paint_waste(&element.category),
+                        manual: false,
+                    });
+                }
             }
         }
-        if let Some(m) = rebar_weight_for(element) {
-            if !has(&quantities, "RebarWeight") {
-                quantities.push(TakeoffQuantity {
-                    name: "RebarWeight",
-                    net: MeasuredQuantity::Mass(m),
-                    waste: self.rules.rebar_waste(&element.category),
-                    manual: false,
-                });
-            }
-        }
-        if let Some(a) = paint_area(element) {
-            if !has(&quantities, "PaintArea") {
-                quantities.push(TakeoffQuantity {
-                    name: "PaintArea",
-                    net: MeasuredQuantity::Area(a),
-                    waste: self.rules.paint_waste(&element.category),
-                    manual: false,
-                });
+        if !has_kind(&quantities, QuantityKind::Mass) {
+            if let Some(m) = rebar_weight_for(element) {
+                if !has(&quantities, "RebarWeight") {
+                    quantities.push(TakeoffQuantity {
+                        name: "RebarWeight",
+                        net: MeasuredQuantity::Mass(m),
+                        waste: self.rules.rebar_waste(&element.category),
+                        manual: false,
+                    });
+                }
             }
         }
 
@@ -227,13 +236,20 @@ mod tests {
     fn engine_extracts_and_derives() {
         let mut p = Project::new(ProjectId::nil(), "Demo");
         let mut e = Element::new(IdFactory::element(), "W1", "Wall")
-            .classified(Classification::new(ClassificationSystem::MasterFormat, "03 30 00"))
+            .classified(Classification::new(
+                ClassificationSystem::MasterFormat,
+                "03 30 00",
+            ))
             .with_quantity_set(
                 QuantitySet::new("BaseQuantities")
                     .with("Length", Quantity::Length(Length::from_feet(40.0)))
-                    .with("GrossVolume", Quantity::Volume(Volume::from_cubic_yards(5.0))),
+                    .with(
+                        "GrossVolume",
+                        Quantity::Volume(Volume::from_cubic_yards(5.0)),
+                    ),
             );
-        e.property_sets.push(PropertySet::new("R").with("RebarSize", PropertyValue::Number(5.0)));
+        e.property_sets
+            .push(PropertySet::new("R").with("RebarSize", PropertyValue::Number(5.0)));
         e.quantity_sets.push(
             QuantitySet::new("Q").with("RebarLength", Quantity::Length(Length::from_meters(10.0))),
         );
@@ -242,9 +258,11 @@ mod tests {
         let result = TakeoffEngine::new().run(&p);
         let item = &result.items[0];
         let names: Vec<&str> = item.quantities.iter().map(|q| q.name).collect();
-        assert!(names.contains(&"ConcreteVolume"));
+        // Stored volume is kept; a duplicate derived `ConcreteVolume` is NOT added.
+        assert!(names.contains(&"GrossVolume"));
+        assert!(!names.contains(&"ConcreteVolume"));
+        // Rebar weight is derived from the RebarSize/RebarLength properties.
         assert!(names.contains(&"RebarWeight"));
-        assert!(names.contains(&"FormworkArea"));
         assert!(result.total_gross(QuantityKind::Volume) > result.total_net(QuantityKind::Volume));
     }
 
@@ -252,25 +270,47 @@ mod tests {
     fn manual_override_replaces_net() {
         let mut p = Project::new(ProjectId::nil(), "Demo");
         let id = IdFactory::element();
-        p.add_element(
-            Element::new(id, "S1", "Slab").with_quantity_set(
-                QuantitySet::new("Q").with("GrossVolume", Quantity::Volume(Volume::from_cubic_yards(2.0))),
+        p.add_element(Element::new(id, "S1", "Slab").with_quantity_set(
+            QuantitySet::new("Q").with(
+                "GrossVolume",
+                Quantity::Volume(Volume::from_cubic_yards(2.0)),
             ),
-        );
+        ));
         let mut result = TakeoffEngine::new().run(&p);
-        assert!(result.override_quantity(id, "GrossVolume", MeasuredQuantity::Volume(Volume::from_cubic_yards(9.0))));
+        assert!(result.override_quantity(
+            id,
+            "GrossVolume",
+            MeasuredQuantity::Volume(Volume::from_cubic_yards(9.0))
+        ));
         let item = result.items.iter().find(|i| i.element_id == id).unwrap();
-        let q = item.quantities.iter().find(|q| q.name == "ConcreteVolume").unwrap();
+        let q = item
+            .quantities
+            .iter()
+            .find(|q| q.name == "GrossVolume")
+            .unwrap();
         assert!(q.manual);
-        assert!((result.total_net(QuantityKind::Volume) - Volume::from_cubic_yards(9.0).cubic_meters()).abs() < 1e-9);
+        assert!(
+            (result.total_net(QuantityKind::Volume) - Volume::from_cubic_yards(9.0).cubic_meters())
+                .abs()
+                < 1e-9
+        );
     }
 
     #[test]
     fn waste_for_kind_mapping() {
         let r = QuantityRules::new();
-        assert_eq!(r.waste_for_kind("Wall", QuantityKind::Volume), r.concrete_waste("Wall"));
-        assert_eq!(r.waste_for_kind("Wall", QuantityKind::Area), r.paint_waste("Wall"));
-        assert_eq!(r.waste_for_kind("Wall", QuantityKind::Mass), r.rebar_waste("Wall"));
+        assert_eq!(
+            r.waste_for_kind("Wall", QuantityKind::Volume),
+            r.concrete_waste("Wall")
+        );
+        assert_eq!(
+            r.waste_for_kind("Wall", QuantityKind::Area),
+            r.paint_waste("Wall")
+        );
+        assert_eq!(
+            r.waste_for_kind("Wall", QuantityKind::Mass),
+            r.rebar_waste("Wall")
+        );
         let _ = WasteFactor::none();
         let _ = Area::from_square_feet(0.0);
     }

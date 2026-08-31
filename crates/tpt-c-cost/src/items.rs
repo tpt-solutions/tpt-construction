@@ -8,7 +8,7 @@ use tpt_c_core::Identified;
 use tpt_c_ids::IdFactory;
 use tpt_c_model::Quantity;
 
-use crate::{CostCode, CostError, Money, round_money};
+use crate::{round_money, CostCode, CostError, Money};
 
 /// A single priced quantity: a cost code, a quantity, and a unit rate.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -31,7 +31,10 @@ impl CostItem {
     /// Build a cost item, computing its extended total.
     pub fn new(code: CostCode, quantity: Quantity, unit_rate: Money) -> Self {
         let description = code.title.clone().unwrap_or_else(|| code.code.clone());
-        let total = Money::new(round_money(quantity.base_value() * unit_rate.amount()), unit_rate.currency());
+        let total = Money::new(
+            round_money(quantity.base_value() * unit_rate.amount()),
+            unit_rate.currency(),
+        );
         Self {
             id: IdFactory::uuid7().to_string(),
             code,
@@ -84,7 +87,9 @@ impl CostAssembly {
     pub fn total(&self) -> Result<Money, CostError> {
         self.items
             .iter()
-            .try_fold(Money::zero(self.code_title_currency()), |acc, i| acc.checked_add(i.total))
+            .try_fold(Money::zero(self.code_title_currency()), |acc, i| {
+                acc.checked_add(i.total.clone())
+            })
     }
 
     fn code_title_currency(&self) -> &str {
@@ -116,7 +121,10 @@ impl LineItem {
     /// Build a line item, computing its extension.
     pub fn new(number: usize, code: CostCode, quantity: Quantity, unit_rate: Money) -> Self {
         let description = code.title.clone().unwrap_or_else(|| code.code.clone());
-        let extension = Money::new(round_money(quantity.base_value() * unit_rate.amount()), unit_rate.currency());
+        let extension = Money::new(
+            round_money(quantity.base_value() * unit_rate.amount()),
+            unit_rate.currency(),
+        );
         Self {
             number,
             code,
@@ -134,8 +142,8 @@ impl LineItem {
             code: item.code.clone(),
             description: item.description.clone(),
             quantity: item.quantity,
-            unit_rate: item.unit_rate,
-            extension: item.total,
+            unit_rate: item.unit_rate.clone(),
+            extension: item.total.clone(),
         }
     }
 }
@@ -170,8 +178,16 @@ mod tests {
 
     #[test]
     fn assembly_total() {
-        let a = CostItem::new(CostCode::new("A"), Quantity::Count(tpt_c_units::Count::from_each(1.0)), Money::new(10.0, "USD"));
-        let b = CostItem::new(CostCode::new("B"), Quantity::Count(tpt_c_units::Count::from_each(2.0)), Money::new(5.0, "USD"));
+        let a = CostItem::new(
+            CostCode::new("A"),
+            Quantity::Count(tpt_c_units::Count::from_each(1.0)),
+            Money::new(10.0, "USD"),
+        );
+        let b = CostItem::new(
+            CostCode::new("B"),
+            Quantity::Count(tpt_c_units::Count::from_each(2.0)),
+            Money::new(5.0, "USD"),
+        );
         let asm = CostAssembly::new(CostCode::new("ASM"), vec![a, b]);
         assert_eq!(asm.total().unwrap().amount(), 20.0);
     }

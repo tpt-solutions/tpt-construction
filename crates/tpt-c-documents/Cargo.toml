@@ -1,0 +1,19 @@
+[package]
+name = "tpt-c-documents"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Document control: documents, drawings, specifications, revisions, transmittals"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ids.workspace = true
+tpt-c-workflow.workspace = true

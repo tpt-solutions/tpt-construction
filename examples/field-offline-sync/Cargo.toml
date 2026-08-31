@@ -5,11 +5,18 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "Demonstrate offline field writes with resync"
-publish = false
-
-[dependencies]
-tpt-c-core.workspace = true
+description = "Phase 7 integration example: offline field writes with CRDT resync and event-sourced audit"
 
 [lints]
 workspace = true
+
+[[bin]]
+name = "field-offline-sync"
+path = "src/main.rs"
+
+[dependencies]
+serde.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ids.workspace = true
+tpt-c-events.workspace = true
+tpt-c-sync.workspace = true

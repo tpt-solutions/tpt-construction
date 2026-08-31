@@ -30,14 +30,13 @@ mod relationship;
 pub use activity::{Activity, ActivityStatus};
 pub use aggregate::Schedule;
 pub use baseline::{Actuals, Baseline};
-pub use calendar::{Calendar, Weekday};
+pub use calendar::Calendar;
 pub use constraint::{ActivityConstraint, ConstraintType};
 pub use cpm::{ActivitySchedule, CpmResult, ScheduleNetwork};
-pub use date::NaiveDate;
+pub use date::{NaiveDate, Weekday};
 pub use relationship::{Dependency, RelationshipType};
 pub use tpt_c_core::{ActivityId, ScheduleId};
 
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// Errors raised while building or solving a schedule network.

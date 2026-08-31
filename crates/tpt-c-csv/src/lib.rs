@@ -16,6 +16,9 @@ pub enum CsvError {
     /// Underlying CSV (de)serialization failure.
     #[error("csv io error: {0}")]
     Io(#[from] csv::Error),
+    /// Raw IO failure (e.g. flush).
+    #[error("io error: {0}")]
+    Write(#[from] std::io::Error),
     /// A required column was missing or malformed.
     #[error("malformed row {line}: {detail}")]
     Malformed {
@@ -47,6 +50,7 @@ pub struct CostRateRow {
 
 impl CostRateRow {
     /// Header row for a cost-database CSV.
+    #[allow(dead_code)]
     pub fn header() -> &'static [&'static str] {
         &["code", "title", "kind", "unit", "rate", "currency"]
     }
@@ -54,7 +58,7 @@ impl CostRateRow {
 
 /// Read a cost database from CSV reader `r`.
 pub fn read_cost_database<R: std::io::Read>(r: R) -> Result<CostDatabase, CsvError> {
-    let mut reader = csv::Reader::new(r);
+    let mut reader = csv::Reader::from_reader(r);
     let mut db = CostDatabase::new();
     for (i, result) in reader.deserialize::<CostRateRow>().enumerate() {
         let line = i + 2; // header is line 1
@@ -85,7 +89,6 @@ pub fn read_cost_database<R: std::io::Read>(r: R) -> Result<CostDatabase, CsvErr
 /// Write a cost database to CSV writer `w`.
 pub fn write_cost_database<W: std::io::Write>(w: W, db: &CostDatabase) -> Result<(), CsvError> {
     let mut writer = csv::Writer::from_writer(w);
-    writer.write_record(CostRateRow::header())?;
     for rate in db.rates() {
         writer.serialize(CostRateRow {
             code: rate.id.clone(),

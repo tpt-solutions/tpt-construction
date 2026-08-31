@@ -15,6 +15,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::fs;
 use std::path::Path;
 use thiserror::Error;
@@ -32,12 +33,12 @@ pub enum DbError {
     #[error("duplicate migration version: {0}")]
     DuplicateMigration(u32),
     /// A migration reported failure.
-    #[error("migration '{name}' failed: {source}")]
+    #[error("migration '{name}' failed: {detail}")]
     MigrationFailed {
         /// Migration name.
         name: String,
         /// Underlying message.
-        source: String,
+        detail: String,
     },
 }
 
@@ -66,17 +67,23 @@ pub trait Repository<K, V> {
 }
 
 /// An in-memory [`Repository`] backed by a hash map.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct InMemoryRepository<K, V> {
     map: HashMap<K, V>,
+}
+
+impl<K, V> Default for InMemoryRepository<K, V> {
+    fn default() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
+    }
 }
 
 impl<K, V> InMemoryRepository<K, V> {
     /// Create an empty repository.
     pub fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-        }
+        Self::default()
     }
 }
 
@@ -219,6 +226,9 @@ impl MigrationTarget for RecordingTarget {
     }
 }
 
+/// A boxed migration function executed against a [`MigrationTarget`].
+pub type MigrationFn = Box<dyn Fn(&mut dyn MigrationTarget) -> Result<(), DbError>>;
+
 /// A single ordered schema/data migration.
 pub struct Migration {
     /// Monotonic version number (must be unique within a registry).
@@ -228,7 +238,7 @@ pub struct Migration {
     /// Human-readable description.
     pub description: String,
     /// The up-migration, executed against a [`MigrationTarget`].
-    pub up: Box<dyn Fn(&mut dyn MigrationTarget) -> Result<(), DbError>>,
+    pub up: MigrationFn,
 }
 
 impl Migration {
@@ -237,7 +247,7 @@ impl Migration {
         version: u32,
         name: impl Into<String>,
         description: impl Into<String>,
-        up: Box<dyn Fn(&mut dyn MigrationTarget) -> Result<(), DbError>>,
+        up: MigrationFn,
     ) -> Self {
         Self {
             version,
@@ -290,7 +300,7 @@ impl AppliedVersions {
 }
 
 /// Orders and validates registered migrations, computing pending work.
-#[derive(Clone, Debug, Default)]
+#[derive(Default)]
 pub struct MigrationRegistry {
     migrations: Vec<Migration>,
 }
@@ -365,7 +375,7 @@ impl Migrator {
             (m.up)(self.target.as_mut())
                 .map_err(|e| DbError::MigrationFailed {
                     name: m.name.clone(),
-                    source: e.to_string(),
+                    detail: e.to_string(),
                 })?;
             self.applied.mark(m.version);
             applied_now.push(m.version);

@@ -9,10 +9,11 @@ use tpt_c_core::ActivityId;
 use tpt_c_units::Duration;
 
 /// Execution state of an activity at a point in time.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ActivityStatus {
     /// Work has not begun.
+    #[default]
     NotStarted,
     /// Work is in progress.
     InProgress,

@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 /// A state that can describe itself and enumerate its legal successors.
-pub trait StateName: Clone + Copy + PartialEq + Eq + Hash + Debug + Serialize + Deserialize<'static> {
+pub trait StateName: Clone + Copy + PartialEq + Eq + Hash + Debug + Serialize + 'static {
     /// Stable, human-readable name of the state.
     fn state_name(&self) -> &'static str;
 
@@ -134,7 +134,7 @@ mod tests {
     fn roundtrips_through_serde_json() {
         let m = StateMachine::new(TestState::B);
         let json = serde_json::to_string(&m).unwrap();
-        assert_eq!(json, "\"b\"");
+        assert_eq!(json, "{\"current\":\"b\"}");
         let back: StateMachine<TestState> = serde_json::from_str(&json).unwrap();
         assert_eq!(back, m);
     }

@@ -17,7 +17,7 @@ pub use revision::{EstimateComparison, EstimateRevision};
 
 use serde::{Deserialize, Serialize};
 use tpt_c_classification::Classification;
-use tpt_c_core::{AuditMeta, EstimateId};
+use tpt_c_core::AuditMeta;
 use tpt_c_cost::{CostCode, Estimate, Markup};
 
 /// A bid-prep wrapper around an estimate.
@@ -50,7 +50,9 @@ impl BidPreparation {
 
     /// Total bid amount (estimate total including markup).
     pub fn total(&self) -> tpt_c_cost::Money {
-        self.estimate.total().unwrap_or_else(|_| tpt_c_cost::Money::zero(&self.estimate.currency))
+        self.estimate
+            .total()
+            .unwrap_or_else(|_| tpt_c_cost::Money::zero(&self.estimate.currency))
     }
 }
 
@@ -81,14 +83,19 @@ impl CostPlan {
     pub fn from_estimate(estimate: &Estimate) -> Self {
         let mut rows = std::collections::BTreeMap::new();
         for line in &estimate.line_items {
-            let entry = rows.entry(line.code.code.clone()).or_insert_with(|| CostPlanRow {
-                code: line.code.code.clone(),
-                title: line.code.title.clone(),
-                line_count: 0,
-                total: tpt_c_cost::Money::zero(&estimate.currency),
-            });
+            let entry = rows
+                .entry(line.code.code.clone())
+                .or_insert_with(|| CostPlanRow {
+                    code: line.code.code.clone(),
+                    title: line.code.title.clone(),
+                    line_count: 0,
+                    total: tpt_c_cost::Money::zero(&estimate.currency),
+                });
             entry.line_count += 1;
-            entry.total = entry.total.checked_add(line.extension).unwrap_or(entry.total);
+            entry.total = entry
+                .total
+                .checked_add(line.extension.clone())
+                .unwrap_or_else(|_| entry.total.clone());
         }
         Self { rows }
     }
@@ -98,7 +105,7 @@ impl CostPlan {
         self.rows
             .values()
             .fold(tpt_c_cost::Money::zero("USD"), |acc, r| {
-                acc.checked_add(r.total).unwrap_or(acc)
+                acc.checked_add(r.total.clone()).unwrap_or(acc)
             })
     }
 }
@@ -121,21 +128,24 @@ pub fn default_markup() -> Markup {
 mod tests {
     use super::*;
     use tpt_c_classification::{Classification, ClassificationSystem};
-    use tpt_c_cost::{CostDatabase, Money, RateUnit, ResourceKind, ResourceRate};
     use tpt_c_core::ProjectId;
+    use tpt_c_cost::{CostDatabase, Money, RateUnit, ResourceKind, ResourceRate};
     use tpt_c_ids::IdFactory;
-    use tpt_c_model::{Element, Project, PropertySet, PropertyValue, Quantity, QuantitySet};
+    use tpt_c_model::{Element, Project, Quantity, QuantitySet};
     use tpt_c_quantities::{TakeoffEngine, TakeoffResult};
     use tpt_c_units::Volume;
 
     fn sample_project() -> Project {
         let mut p = Project::new(ProjectId::nil(), "Demo");
         let e = Element::new(IdFactory::element(), "S1", "Slab")
-            .classified(Classification::new(ClassificationSystem::MasterFormat, "03 30 00"))
-            .with_quantity_set(
-                QuantitySet::new("Q")
-                    .with("GrossVolume", Quantity::Volume(Volume::from_cubic_yards(10.0))),
-            );
+            .classified(Classification::new(
+                ClassificationSystem::MasterFormat,
+                "03 30 00",
+            ))
+            .with_quantity_set(QuantitySet::new("Q").with(
+                "GrossVolume",
+                Quantity::Volume(Volume::from_cubic_yards(10.0)),
+            ));
         p.add_element(e);
         p
     }
@@ -144,8 +154,13 @@ mod tests {
         let mut db = CostDatabase::new();
         db.insert(
             "03 30 00",
-            ResourceRate::new("r1", ResourceKind::Material, RateUnit::Volume, Money::new(120.0, "USD"))
-                .with_description("Concrete CY"),
+            ResourceRate::new(
+                "r1",
+                ResourceKind::Material,
+                RateUnit::Volume,
+                Money::new(120.0, "USD"),
+            )
+            .with_description("Concrete CY"),
         );
         db
     }
@@ -167,7 +182,10 @@ mod tests {
     fn cost_plan_rollup() {
         let project = sample_project();
         let takeoff = TakeoffEngine::new().run(&project);
-        let estimate = EstimateBuilder::new("E", "USD").with_database(sample_db()).from_takeoff(&takeoff).unwrap();
+        let estimate = EstimateBuilder::new("E", "USD")
+            .with_database(sample_db())
+            .from_takeoff(&takeoff)
+            .unwrap();
         let plan = CostPlan::from_estimate(&estimate);
         assert_eq!(plan.rows.len(), 1);
         assert!(plan.total().amount() > 0.0);
@@ -177,7 +195,10 @@ mod tests {
     fn revision_compare() {
         let project = sample_project();
         let takeoff = TakeoffEngine::new().run(&project);
-        let a = EstimateBuilder::new("E", "USD").with_database(sample_db()).from_takeoff(&takeoff).unwrap();
+        let a = EstimateBuilder::new("E", "USD")
+            .with_database(sample_db())
+            .from_takeoff(&takeoff)
+            .unwrap();
         let b = a.clone();
         let rev_a = EstimateRevision::new(a, "baseline");
         let rev_b = EstimateRevision::new(b, "no-change");

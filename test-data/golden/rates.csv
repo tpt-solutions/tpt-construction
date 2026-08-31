@@ -1,0 +1,5 @@
+code,title,kind,unit,rate,currency
+03 30 00,Cast-in-Place Concrete,material,volume,120,USD
+03 20 00,Concrete Formwork,material,area,15,USD
+05 10 00,Structural Steel Erection,labor,each,2.5,USD
+09 30 00,Painting,material,area,3,USD

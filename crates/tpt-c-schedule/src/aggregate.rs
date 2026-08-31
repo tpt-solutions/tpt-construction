@@ -70,6 +70,11 @@ impl Schedule {
         self.network.schedule()
     }
 
+    /// All activities in the schedule, keyed by identifier.
+    pub fn activities(&self) -> &std::collections::HashMap<ActivityId, Activity> {
+        self.network.activities()
+    }
+
     /// Calendar start and finish dates for an activity's early dates.
     pub fn activity_dates(
         &self,
@@ -80,8 +85,12 @@ impl Schedule {
             .activities
             .get(&id)
             .ok_or(ScheduleError::UnknownActivity(id))?;
-        let start = self.calendar.add_working_hours(self.project_start, s.early_start);
-        let finish = self.calendar.add_working_hours(self.project_start, s.early_finish);
+        let start = self
+            .calendar
+            .add_working_hours(self.project_start, s.early_start);
+        let finish = self
+            .calendar
+            .add_working_hours(self.project_start, s.early_finish);
         Ok((start, finish))
     }
 
@@ -103,7 +112,11 @@ mod tests {
         let start = NaiveDate::new(2024, 1, 1);
         let mut sched = Schedule::new("Demo", cal, start);
         sched
-            .add_activity(Activity::new(ActivityId::nil(), "A", Duration::from_hours(16.0)))
+            .add_activity(Activity::new(
+                ActivityId::nil(),
+                "A",
+                Duration::from_hours(16.0),
+            ))
             .unwrap();
         let r = sched.compute().unwrap();
         let (s, f) = sched.activity_dates(&r, ActivityId::nil()).unwrap();

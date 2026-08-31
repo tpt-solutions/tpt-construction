@@ -1,0 +1,81 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "name": "Golden Demo",
+  "default_system": "master_format",
+  "elements": [
+    {
+      "id": "01a05614-525d-79e0-9939-8e3542677ef6",
+      "name": "SLAB-1",
+      "category": "Slab",
+      "quantity_sets": [
+        {
+          "name": "BaseQuantities",
+          "quantities": [
+            {
+              "name": "GrossVolume",
+              "quantity": {
+                "type": "volume",
+                "value": 7.64554857984
+              }
+            },
+            {
+              "name": "FormworkArea",
+              "quantity": {
+                "type": "area",
+                "value": 37.161216
+              }
+            }
+          ]
+        }
+      ],
+      "classification": {
+        "system": "master_format",
+        "code": "03 30 00"
+      }
+    },
+    {
+      "id": "01a05614-525d-7180-8b49-6830b6679b5c",
+      "name": "WALL-1",
+      "category": "Wall",
+      "property_sets": [
+        {
+          "name": "R",
+          "properties": [
+            {
+              "name": "RebarSize",
+              "value": {
+                "type": "number",
+                "value": 5.0
+              }
+            }
+          ]
+        }
+      ],
+      "quantity_sets": [
+        {
+          "name": "Q",
+          "quantities": [
+            {
+              "name": "PaintArea",
+              "quantity": {
+                "type": "area",
+                "value": 27.870912
+              }
+            },
+            {
+              "name": "RebarLength",
+              "quantity": {
+                "type": "length",
+                "value": 20.0
+              }
+            }
+          ]
+        }
+      ],
+      "classification": {
+        "system": "master_format",
+        "code": "09 30 00"
+      }
+    }
+  ]
+}

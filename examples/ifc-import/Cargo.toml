@@ -5,11 +5,12 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "Parse a sample IFC file into the neutral tpt-c-model"
 publish = false
+description = "Phase 2 integration example: parse a sample IFC into the neutral tpt-c-model"
 
 [dependencies]
-tpt-c-core.workspace = true
+tpt-c-ifc.workspace = true
+tpt-c-model.workspace = true
 
 [lints]
 workspace = true

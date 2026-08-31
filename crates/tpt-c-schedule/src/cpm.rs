@@ -5,6 +5,8 @@
 
 use std::collections::{HashMap, VecDeque};
 
+use serde::{Deserialize, Serialize};
+
 use tpt_c_core::ActivityId;
 
 use crate::activity::Activity;
@@ -48,7 +50,7 @@ pub struct CpmResult {
 }
 
 /// A schedulable network of activities, dependencies, and constraints.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct ScheduleNetwork {
     activities: HashMap<ActivityId, Activity>,
     deps: Vec<Dependency>,
@@ -129,7 +131,9 @@ impl ScheduleNetwork {
             }
             for c in self.constraints.iter().filter(|c| c.activity == id) {
                 let min_start = match c.kind {
-                    ConstraintType::StartNoEarlierThan | ConstraintType::MustStartOn => c.hours_from_start,
+                    ConstraintType::StartNoEarlierThan | ConstraintType::MustStartOn => {
+                        c.hours_from_start
+                    }
                     ConstraintType::FinishNoEarlierThan | ConstraintType::MustFinishOn => {
                         c.hours_from_start - dur(&id)
                     }
@@ -153,7 +157,9 @@ impl ScheduleNetwork {
             let mut finish = project_duration;
             for c in self.constraints.iter().filter(|c| c.activity == id) {
                 let max_finish = match c.kind {
-                    ConstraintType::FinishNoLaterThan | ConstraintType::MustFinishOn => c.hours_from_start,
+                    ConstraintType::FinishNoLaterThan | ConstraintType::MustFinishOn => {
+                        c.hours_from_start
+                    }
                     ConstraintType::StartNoLaterThan | ConstraintType::MustStartOn => {
                         c.hours_from_start + dur(&id)
                     }
@@ -256,11 +262,8 @@ impl ScheduleNetwork {
 
     /// Topologically order activities, detecting cycles.
     fn topological_order(&self) -> Result<Vec<ActivityId>, ScheduleError> {
-        let mut indegree: HashMap<ActivityId, usize> = self
-            .activities
-            .keys()
-            .map(|k| (*k, 0))
-            .collect();
+        let mut indegree: HashMap<ActivityId, usize> =
+            self.activities.keys().map(|k| (*k, 0)).collect();
         for d in &self.deps {
             *indegree.get_mut(&d.successor).unwrap() += 1;
         }
@@ -309,15 +312,28 @@ mod tests {
     #[test]
     fn classic_network() {
         let mut net = ScheduleNetwork::new();
-        for a in [act(1, 2.0), act(2, 3.0), act(3, 2.0), act(4, 4.0), act(5, 1.0), act(6, 2.0)] {
+        for a in [
+            act(1, 2.0),
+            act(2, 3.0),
+            act(3, 2.0),
+            act(4, 4.0),
+            act(5, 1.0),
+            act(6, 2.0),
+        ] {
             net.add_activity(a).unwrap();
         }
-        net.add_dependency(Dependency::finish_to_start(id(1), id(2))).unwrap();
-        net.add_dependency(Dependency::finish_to_start(id(1), id(3))).unwrap();
-        net.add_dependency(Dependency::finish_to_start(id(2), id(4))).unwrap();
-        net.add_dependency(Dependency::finish_to_start(id(3), id(5))).unwrap();
-        net.add_dependency(Dependency::finish_to_start(id(4), id(6))).unwrap();
-        net.add_dependency(Dependency::finish_to_start(id(5), id(6))).unwrap();
+        net.add_dependency(Dependency::finish_to_start(id(1), id(2)))
+            .unwrap();
+        net.add_dependency(Dependency::finish_to_start(id(1), id(3)))
+            .unwrap();
+        net.add_dependency(Dependency::finish_to_start(id(2), id(4)))
+            .unwrap();
+        net.add_dependency(Dependency::finish_to_start(id(3), id(5)))
+            .unwrap();
+        net.add_dependency(Dependency::finish_to_start(id(4), id(6)))
+            .unwrap();
+        net.add_dependency(Dependency::finish_to_start(id(5), id(6)))
+            .unwrap();
 
         let r = net.schedule().unwrap();
         assert!((r.project_duration - 11.0).abs() < 1e-9);
@@ -325,10 +341,7 @@ mod tests {
         assert_eq!(r.activities[&id(6)].early_start, 9.0);
 
         let critical: HashSet<ActivityId> = r.critical_path.iter().copied().collect();
-        assert_eq!(
-            critical,
-            [id(1), id(2), id(4), id(6)].into_iter().collect()
-        );
+        assert_eq!(critical, [id(1), id(2), id(4), id(6)].into_iter().collect());
 
         // Float for the off-critical branch.
         assert!((r.activities[&id(3)].total_float - 4.0).abs() < 1e-9);
@@ -380,14 +393,14 @@ mod tests {
         net.add_activity(act(2, 3.0)).unwrap();
         net.add_dependency(Dependency::finish_to_start(id(1), id(2)))
             .unwrap();
-        // Force activity 2 to finish no later than hour 6, compressing its float.
+        // Force activity 2 to finish no later than hour 4, tightening its float.
         net.add_constraint(ActivityConstraint::new(
             id(2),
             ConstraintType::FinishNoLaterThan,
-            6.0,
+            4.0,
         ))
         .unwrap();
         let r = net.schedule().unwrap();
-        assert!((r.activities[&id(2)].late_finish - 6.0).abs() < 1e-9);
+        assert!((r.activities[&id(2)].late_finish - 4.0).abs() < 1e-9);
     }
 }
