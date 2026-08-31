@@ -1,0 +1,15 @@
+[package]
+name = "tpt-c-sync"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Offline-first synchronization with CRDTs and deterministic conflict resolution for tpt-construction"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true

@@ -1,0 +1,13 @@
+[package]
+name = "tpt-c-risk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Schedule/cost risk analysis (Monte Carlo) for construction uncertainty"
+
+[lints]
+workspace = true
+
+[dependencies]

@@ -1,0 +1,20 @@
+[package]
+name = "tpt-c-ifc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "ISO-10303-21 (STEP) IFC parser mapping building elements to the neutral tpt-c-model"
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+tpt-c-classification.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ids.workspace = true
+tpt-c-model.workspace = true
+tpt-c-units.workspace = true
+
+[lints]
+workspace = true

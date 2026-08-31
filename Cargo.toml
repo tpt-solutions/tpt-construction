@@ -1,0 +1,111 @@
+# TPT Construction — workspace root manifest.
+#
+# NOTE: The design doc (spec.txt §6) defines a [patch.crates-io] section pointing
+# at local sibling checkouts of `tpt-math` / `tpt-engineering`. Those repositories
+# are not present in every environment, so patches are intentionally omitted here.
+# Crates in this workspace are self-contained until those substrates are published
+# or vendored locally.
+
+[workspace]
+resolver = "2"
+# NOTE: the project is implemented phase-by-phase. Auto-generated stub crates
+# for not-yet-implemented phases (cost, workflow, schedule, ...) may exist on
+# disk but are intentionally excluded here so that `cargo` only builds the
+# crates that are actually implemented and green. Expand this list as each
+# phase lands (see todo.md).
+members = [
+    "crates/tpt-c-core",
+    "crates/tpt-c-ids",
+    "crates/tpt-c-units",
+    "crates/tpt-c-classification",
+    "crates/tpt-c-model",
+    "crates/tpt-c-geometry",
+    "crates/tpt-c-geo",
+    "crates/tpt-c-ifc",
+    "crates/tpt-c-bcf",
+    "crates/tpt-c-gltf",
+    "examples/ifc-import",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/tpt-solutions/tpt-construction"
+authors = ["TPT Solutions"]
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
+
+[workspace.dependencies]
+# ---------------------------------------------------------------------------
+# External dependencies.
+# License policy (spec §4): prefer an MIT-selectable chain. Everything below is
+# dual-licensed MIT OR Apache-2.0. Any Apache-only dependency must be isolated
+# behind an optional feature and documented.
+# ---------------------------------------------------------------------------
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v7", "v5", "std", "serde"] }
+csv = "1"
+# External XML dependency used by format crates (cached offline).
+quick-xml = "0.22"
+rust_xlsxwriter = "0.73"
+calamine = "0.24"
+
+# ---------------------------------------------------------------------------
+# Internal crates (path dependencies, inherited by members on demand).
+# ---------------------------------------------------------------------------
+tpt-c-core = { path = "crates/tpt-c-core", version = "0.1.0" }
+tpt-c-ids = { path = "crates/tpt-c-ids", version = "0.1.0" }
+tpt-c-units = { path = "crates/tpt-c-units", version = "0.1.0" }
+tpt-c-classification = { path = "crates/tpt-c-classification", version = "0.1.0" }
+tpt-c-model = { path = "crates/tpt-c-model", version = "0.1.0" }
+tpt-c-geometry = { path = "crates/tpt-c-geometry", version = "0.1.0" }
+tpt-c-geo = { path = "crates/tpt-c-geo", version = "0.1.0" }
+tpt-c-ifc = { path = "crates/tpt-c-ifc", version = "0.1.0" }
+tpt-c-bcf = { path = "crates/tpt-c-bcf", version = "0.1.0" }
+tpt-c-gltf = { path = "crates/tpt-c-gltf", version = "0.1.0" }
+tpt-c-las = { path = "crates/tpt-c-las", version = "0.1.0" }
+tpt-c-dxf = { path = "crates/tpt-c-dxf", version = "0.1.0" }
+tpt-c-csv = { path = "crates/tpt-c-csv", version = "0.1.0" }
+tpt-c-xlsx = { path = "crates/tpt-c-xlsx", version = "0.1.0" }
+tpt-c-quantities = { path = "crates/tpt-c-quantities", version = "0.1.0" }
+tpt-c-cost = { path = "crates/tpt-c-cost", version = "0.1.0" }
+tpt-c-estimating = { path = "crates/tpt-c-estimating", version = "0.1.0" }
+tpt-c-schedule = { path = "crates/tpt-c-schedule", version = "0.1.0" }
+tpt-c-risk = { path = "crates/tpt-c-risk", version = "0.1.0" }
+tpt-c-earned-value = { path = "crates/tpt-c-earned-value", version = "0.1.0" }
+tpt-c-earthwork = { path = "crates/tpt-c-earthwork", version = "0.1.0" }
+tpt-c-alignment = { path = "crates/tpt-c-alignment", version = "0.1.0" }
+tpt-c-field = { path = "crates/tpt-c-field", version = "0.1.0" }
+tpt-c-workflow = { path = "crates/tpt-c-workflow", version = "0.1.0" }
+tpt-c-safety = { path = "crates/tpt-c-safety", version = "0.1.0" }
+tpt-c-equipment = { path = "crates/tpt-c-equipment", version = "0.1.0" }
+tpt-c-documents = { path = "crates/tpt-c-documents", version = "0.1.0" }
+tpt-c-contracts = { path = "crates/tpt-c-contracts", version = "0.1.0" }
+tpt-c-payapps = { path = "crates/tpt-c-payapps", version = "0.1.0" }
+tpt-c-change = { path = "crates/tpt-c-change", version = "0.1.0" }
+tpt-c-sync = { path = "crates/tpt-c-sync", version = "0.1.0" }
+tpt-c-events = { path = "crates/tpt-c-events", version = "0.1.0" }
+tpt-c-db = { path = "crates/tpt-c-db", version = "0.1.0" }
+tpt-c-api = { path = "crates/tpt-c-api", version = "0.1.0" }
+tpt-c-fm = { path = "crates/tpt-c-fm", version = "0.1.0" }
+tpt-c-assets = { path = "crates/tpt-c-assets", version = "0.1.0" }
+tpt-c-maintenance = { path = "crates/tpt-c-maintenance", version = "0.1.0" }
+tpt-c-twin = { path = "crates/tpt-c-twin", version = "0.1.0" }
+tpt-c-space = { path = "crates/tpt-c-space", version = "0.1.0" }
+tpt-c-wasm = { path = "crates/tpt-c-wasm", version = "0.1.0" }
+
+# Local sibling repository overrides.
+# Re-enable when ../tpt-math and ../tpt-engineering checkouts exist:
+#
+# [patch.crates-io]
+# tpt-math-linalg-fixed = { path = "../tpt-math/crates/linalg-fixed" }
+# tpt-math-prob-dist = { path = "../tpt-math/crates/prob-dist" }
+# tpt-math-optimize-general = { path = "../tpt-math/crates/optimize-general" }
+# tpt-engineering = { path = "../tpt-engineering" }

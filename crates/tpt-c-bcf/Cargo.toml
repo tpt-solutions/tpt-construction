@@ -1,0 +1,15 @@
+[package]
+name = "tpt-c-bcf"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "BIM Collaboration Format (BCF) topic model and XML (de)serialization"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true

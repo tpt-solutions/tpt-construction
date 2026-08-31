@@ -1,0 +1,16 @@
+[package]
+name = "tpt-c-ids"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Deterministic/UUIDv7 id generation and external-id mapping for tpt-construction"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+tpt-c-core.workspace = true
+uuid.workspace = true

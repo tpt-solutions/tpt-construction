@@ -1,0 +1,19 @@
+[package]
+name = "tpt-c-quantities"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Quantity takeoff engine: count/length/area/volume/weight, net vs gross, waste factors, manual overrides, and a derived rule set"
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+tpt-c-core.workspace = true
+tpt-c-classification.workspace = true
+tpt-c-model.workspace = true
+tpt-c-units.workspace = true
+
+[dev-dependencies]
+tpt-c-ids.workspace = true

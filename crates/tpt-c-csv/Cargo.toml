@@ -1,0 +1,20 @@
+[package]
+name = "tpt-c-csv"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Tabular CSV import/export for estimates, cost databases, schedules, and field logs"
+
+[dependencies]
+csv.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+tpt-c-core.workspace = true
+tpt-c-units.workspace = true
+tpt-c-model.workspace = true
+tpt-c-cost.workspace = true
+
+[dev-dependencies]
+tpt-c-ids.workspace = true

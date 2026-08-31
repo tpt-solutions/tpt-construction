@@ -1,0 +1,25 @@
+name: License Headers
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  spdx:
+    name: SPDX header check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify every .rs file carries the SPDX header
+        run: |
+          missing=0
+          while IFS= read -r f; do
+            first=$(head -n 1 "$f")
+            second=$(sed -n '2p' "$f")
+            if ! echo "$first$second" | grep -q "SPDX-License-Identifier: MIT OR Apache-2.0"; then
+              echo "Missing SPDX header: $f"
+              missing=1
+            fi
+          done < <(find crates examples -name '*.rs' -type f)
+          exit $missing

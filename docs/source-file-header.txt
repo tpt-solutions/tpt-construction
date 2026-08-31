@@ -1,0 +1,16 @@
+Source file header template (spec §26)
+========================================
+
+Every Rust source file (.rs) in this repository MUST begin with exactly:
+
+// Copyright (c) TPT Solutions
+// SPDX-License-Identifier: MIT OR Apache-2.0
+
+Rustdoc follows immediately after a blank line, e.g.:
+
+//! Core domain types for TPT Construction.
+//!
+//! This crate provides ...
+
+Enforcement: .github/workflows/license.yml fails when any .rs file under
+crates/ or examples/ misses the SPDX line within its first two lines.

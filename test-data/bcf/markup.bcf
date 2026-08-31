@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Markup>
+  <Topic Guid="topic-1" TopicType="Clash" TopicStatus="in_progress">
+    <Title>Wall clashes with beam</Title>
+    <Priority>high</Priority>
+    <CreatedBy>alice</CreatedBy>
+    <CreationDate>2026-01-01T00:00:00Z</CreationDate>
+    <AssignedTo>bob</AssignedTo>
+    <Description>Two elements overlap.</Description>
+  </Topic>
+  <Comment Guid="c1" Author="bob" Date="2026-01-02T00:00:00Z">
+    <Comment>Confirmed clash.</Comment>
+  </Comment>
+  <Viewpoints>
+    <Viewpoint Guid="vp1">
+      <Description>Clash zoomed view</Description>
+    </Viewpoint>
+  </Viewpoints>
+</Markup>
