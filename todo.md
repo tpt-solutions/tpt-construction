@@ -98,6 +98,10 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 - [x] Scaffold crate
 - [x] Excel import/export (estimator workflows, owner reports, bid summaries, budget exports)
 - [x] Unit tests + rustdoc + SPDX header
+### Dependency hygiene: eliminate ryu / zopfli (Apache-2.0-only transitives, spec §4)
+- [x] tpt-c-csv: replace the `csv` crate with a hand-rolled RFC4180-ish encoder/decoder scoped to `CostRateRow` (drops `csv` + `ryu`); keep `read_cost_database`/`write_cost_database` signatures unchanged; add quoting-edge-case tests
+- [x] tpt-c-xlsx: replace `rust_xlsxwriter` with a hand-rolled OOXML writer over `zip`/`flate2` (`zip = "4.6"`, `default-features = false, features = ["deflate-flate2"]`; `flate2` with `rust_backend`) — drops `rust_xlsxwriter` and `zip`'s bundled `zopfli`; keep `write_table`/`write_estimate` signatures unchanged; add zip-structural + XML well-formedness tests (quick-xml as dev-dependency)
+- [x] Verify `cargo tree -i ryu`, `cargo tree -i zopfli`, `cargo tree -i csv`, and `cargo tree -i rust_xlsxwriter` all resolve to nothing; `cargo deny check licenses` still green; `tpt-c-wasm` builds for `wasm32-unknown-unknown`
 ### First Vertical Slice (spec §24)
 - [x] Build `examples/quantity-takeoff` and `examples/estimate-export`
 - [x] Implement CLI: `examples/tpt` ships an `estimate` subcommand (`tpt estimate model.json --cost-db rates.csv --output estimate.xlsx`); it consumes the neutral `tpt-c-model` JSON rather than a raw `.ifc` directly — IFC→JSON conversion goes through `tpt-c-ifc` separately, which is currently blocked by the Phase 2 parser bug above
@@ -209,18 +213,18 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 
 ## Phase 9: Web Platform Enablement
 ### tpt-c-wasm
-- [ ] Scaffold crate
-- [ ] WASM bindings for IFC parsing, quantity takeoff, CPM scheduling, clash detection prep, model simplification, glTF export
-- [ ] Browser build target verified (wasm-pack or similar)
-- [ ] Unit tests + rustdoc + SPDX header
+- [x] Scaffold crate
+- [x] WASM bindings for IFC parsing, quantity takeoff, CPM scheduling, clash detection prep, model simplification, glTF export
+- [x] Browser build target verified (wasm32-unknown-unknown)
+- [x] Unit tests + rustdoc + SPDX header
 ### tpt-c-api
-- [ ] Scaffold crate
-- [ ] REST/GraphQL API models, auth patterns, authorization, project access control, webhooks, audit logging
-- [ ] Unit tests + rustdoc + SPDX header
-- [ ] Phase 9 integration check: browser demo consuming tpt-c-wasm
+- [x] Scaffold crate
+- [x] REST/GraphQL API models, auth patterns, authorization, project access control, webhooks, audit logging
+- [x] Unit tests + rustdoc + SPDX header
+- [x] Phase 9 integration check: browser demo consuming tpt-c-wasm (`examples/wasm-browser-demo`, passing)
 
 ## Ongoing / Cross-Cutting
-- [ ] Maintain cargo-deny license checks passing on every phase (spec §21)
-- [ ] Keep CI green (fmt, clippy, test, deny) after each crate lands
+- [x] Maintain cargo-deny license checks passing on every phase (spec §21)
+- [x] Keep CI green (fmt, clippy, test, deny) after each crate lands
 - [ ] Update Industry Coverage Map (spec §19) as crates land
 - [ ] Isolate any unavoidable Apache-only dependency behind an optional feature, documented per spec §4

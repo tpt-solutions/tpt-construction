@@ -8,7 +8,6 @@ authors.workspace = true
 description = "Tabular CSV import/export for estimates, cost databases, schedules, and field logs"
 
 [dependencies]
-csv.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 tpt-c-core.workspace = true

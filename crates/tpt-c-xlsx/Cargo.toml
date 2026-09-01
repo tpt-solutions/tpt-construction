@@ -8,7 +8,8 @@ authors.workspace = true
 description = "Excel (xlsx) export for estimates, owner reports, and bid summaries"
 
 [dependencies]
-rust_xlsxwriter.workspace = true
+zip = { workspace = true }
+flate2 = { workspace = true }
 serde.workspace = true
 thiserror.workspace = true
 tpt-c-core.workspace = true
@@ -16,6 +17,9 @@ tpt-c-cost.workspace = true
 tpt-c-estimating.workspace = true
 tpt-c-model.workspace = true
 tpt-c-units.workspace = true
+
+[dev-dependencies]
+quick-xml = { workspace = true }
 
 [lints]
 workspace = true

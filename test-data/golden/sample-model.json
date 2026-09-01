@@ -4,7 +4,7 @@
   "default_system": "master_format",
   "elements": [
     {
-      "id": "01a059f5-6324-74e6-b69e-720a31cf0a27",
+      "id": "01a05a6c-fa38-753a-960d-fb751fd0ffe2",
       "name": "SLAB-1",
       "category": "Slab",
       "quantity_sets": [
@@ -34,7 +34,7 @@
       }
     },
     {
-      "id": "01a059f5-6324-7047-ae73-b4c154b51e92",
+      "id": "01a05a6c-fa38-7358-b813-0a3713b8b8df",
       "name": "WALL-1",
       "category": "Wall",
       "property_sets": [
