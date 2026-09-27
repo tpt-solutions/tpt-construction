@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Neutral construction domain model (project, site, building, element, assembly, property/quantity sets)"
+readme = "README.md"
+categories = ["data-structures", "encoding"]
+keywords = ["construction", "bim", "ifc", "model", "schema"]
 
 [lints]
 workspace = true

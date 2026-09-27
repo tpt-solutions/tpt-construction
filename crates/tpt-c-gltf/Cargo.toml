@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Export neutral construction models (tpt-c-model) to glTF 2.0 JSON for web/mesh viewers"
+readme = "README.md"
+categories = ["rendering", "visualization"]
+keywords = ["gltf", "bim", "construction", "3d", "viewer"]
 
 [dependencies]
 serde.workspace = true

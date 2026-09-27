@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "WASM bindings for IFC parsing, quantity takeoff, CPM scheduling, clash detection prep, model simplification, glTF export"
+readme = "README.md"
+categories = ["wasm", "api-bindings"]
+keywords = ["wasm", "web", "ifc", "gltf", "construction"]
 
 [lints]
 workspace = true

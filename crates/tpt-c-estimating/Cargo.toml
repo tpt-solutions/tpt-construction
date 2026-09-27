@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Estimate builder, bid preparation, pricing workflows, revisions, comparison, and cost planning"
+readme = "README.md"
+categories = ["value-formatting", "algorithms"]
+keywords = ["construction", "estimating", "bid", "takeoff", "cost-estimate"]
 
 [dependencies]
 serde.workspace = true

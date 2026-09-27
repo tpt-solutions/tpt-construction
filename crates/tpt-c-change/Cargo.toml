@@ -1,0 +1,22 @@
+[package]
+name = "tpt-c-change"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+description = "Change orders, revisions, quantity/cost deltas and change control for tpt-construction"
+readme = "README.md"
+categories = ["data-structures", "value-formatting"]
+keywords = ["construction", "change-orders", "cost-delta", "quantity-delta", "workflow"]
+
+[lints]
+workspace = true
+
+[dependencies]
+serde.workspace = true
+thiserror.workspace = true
+uuid.workspace = true
+tpt-c-core.workspace = true
+tpt-c-ids.workspace = true
+tpt-c-cost.workspace = true

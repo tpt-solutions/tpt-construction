@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Construction schedule and cost risk: Monte Carlo simulation, weather and productivity uncertainty"
+readme = "README.md"
+categories = ["simulation", "algorithms"]
+keywords = ["monte-carlo", "risk", "construction", "scheduling", "contingency"]
 
 [dependencies]
 serde.workspace = true

@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Phase 7 integration example: offline field writes with CRDT resync and event-sourced audit"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "crdt", "offline", "sync"]
 
 [lints]
 workspace = true

@@ -5,7 +5,10 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "TPT Construction CLI: estimate, takeoff, and export workflows"
+description = "TPT Construction CLI: estimate, takeoff, schedule, and serve workflows"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "cli", "estimating"]
 publish = false
 
 [dependencies]
@@ -17,6 +20,14 @@ tpt-c-cost.workspace = true
 tpt-c-estimating.workspace = true
 tpt-c-csv.workspace = true
 tpt-c-xlsx.workspace = true
+# `serve` subcommand (thin hand-rolled HTTP server), enabled via the feature.
+tpt-c-schedule = { workspace = true, optional = true }
+tpt-c-api = { workspace = true, optional = true }
+tpt-c-units = { workspace = true, optional = true }
+uuid = { workspace = true, optional = true }
+
+[features]
+serve = ["dep:tpt-c-schedule", "dep:tpt-c-api", "dep:tpt-c-units", "dep:uuid"]
 
 [[bin]]
 name = "tpt"

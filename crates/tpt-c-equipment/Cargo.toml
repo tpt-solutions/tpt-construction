@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Equipment registry, utilization, fuel/maintenance tracking and field telematics for tpt-construction"
+readme = "README.md"
+categories = ["data-structures", "hardware-support"]
+keywords = ["construction", "telematics", "fleet", "maintenance", "j1939"]
 
 [lints]
 workspace = true

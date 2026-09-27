@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "REST/GraphQL API models, auth patterns, authorization, project access control, webhooks, audit logging"
+readme = "README.md"
+categories = ["api-bindings", "web-programming"]
+keywords = ["api", "webhooks", "auth", "audit", "construction"]
 
 [lints]
 workspace = true

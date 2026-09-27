@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Digital twin state, sensor mapping, live telemetry, spatial asset context"
+readme = "README.md"
+categories = ["data-structures"]
+keywords = ["digital-twin", "telemetry", "sensors", "iot"]
 
 [lints]
 workspace = true

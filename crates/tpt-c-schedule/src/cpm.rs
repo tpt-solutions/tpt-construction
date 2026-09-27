@@ -265,7 +265,9 @@ impl ScheduleNetwork {
         let mut indegree: HashMap<ActivityId, usize> =
             self.activities.keys().map(|k| (*k, 0)).collect();
         for d in &self.deps {
-            *indegree.get_mut(&d.successor).unwrap() += 1;
+            // Dependencies are validated to reference known activities, but
+            // stay defensive: unknown successors contribute no indegree.
+            *indegree.entry(d.successor).or_insert(0) += 1;
         }
         let mut queue: VecDeque<ActivityId> = indegree
             .iter()
@@ -276,10 +278,11 @@ impl ScheduleNetwork {
         while let Some(n) = queue.pop_front() {
             order.push(n);
             for d in self.deps.iter().filter(|d| d.predecessor == n) {
-                let s = indegree.get_mut(&d.successor).unwrap();
-                *s -= 1;
-                if *s == 0 {
-                    queue.push_back(d.successor);
+                if let Some(s) = indegree.get_mut(&d.successor) {
+                    *s -= 1;
+                    if *s == 0 {
+                        queue.push_back(d.successor);
+                    }
                 }
             }
         }

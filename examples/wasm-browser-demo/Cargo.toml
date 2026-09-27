@@ -7,6 +7,9 @@ repository.workspace = true
 authors.workspace = true
 publish = false
 description = "Phase 9 integration example: consume tpt-c-wasm from a browser-style Rust binary"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "wasm", "ifc"]
 
 [dependencies]
 tpt-c-wasm.workspace = true

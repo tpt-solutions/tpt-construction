@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Core domain primitives (ids, errors, audit, project context) for tpt-construction"
+readme = "README.md"
+categories = ["rust-patterns", "data-structures"]
+keywords = ["construction", "ids", "domain", "audit"]
 
 [lints]
 workspace = true

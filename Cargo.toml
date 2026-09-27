@@ -16,6 +16,12 @@ resolver = "2"
 members = [
     "crates/tpt-c-core",
     "crates/tpt-c-ids",
+    "crates/tpt-c-las",
+    "crates/tpt-c-dxf",
+    "crates/tpt-c-db",
+    "crates/tpt-c-equipment",
+    "crates/tpt-c-events",
+    "crates/tpt-c-sync",
     "crates/tpt-c-units",
     "crates/tpt-c-classification",
     "crates/tpt-c-model",
@@ -32,6 +38,7 @@ members = [
     "crates/tpt-c-quantities",
     "crates/tpt-c-cost",
     "crates/tpt-c-estimating",
+    "crates/tpt-c-change",
     "crates/tpt-c-csv",
     "crates/tpt-c-xlsx",
     "crates/tpt-c-workflow",
@@ -83,7 +90,7 @@ serde_json = "1"
 thiserror = "2"
 uuid = { version = "1", features = ["v7", "v5", "std", "serde", "js"] }
 # External XML dependency used by format crates (cached offline).
-quick-xml = "0.22"
+quick-xml = "0.42"
 calamine = "0.24"
 # xlsx writing: hand-rolled OOXML + zip, feature-pinned to avoid the
 # Apache-2.0-only `zopfli` crate that `zip`'s bundled "deflate" feature

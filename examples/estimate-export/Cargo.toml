@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Build an estimate from a model + cost database and export it to xlsx"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "estimating", "xlsx"]
 publish = false
 
 [dependencies]

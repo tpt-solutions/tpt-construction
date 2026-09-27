@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Approval workflows and state machines for RFI, Submittal, Punch List, Issue, Change Order, Notice, and Transmittal"
+readme = "README.md"
+categories = ["data-structures", "rust-patterns"]
+keywords = ["construction", "workflow", "rfi", "submittal", "state-machine"]
 
 [lints]
 workspace = true

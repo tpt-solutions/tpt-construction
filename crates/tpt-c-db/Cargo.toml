@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Persistence patterns: repositories, storage backends and a migration framework for tpt-construction"
+readme = "README.md"
+categories = ["database-implementations", "data-structures"]
+keywords = ["database", "migrations", "repository", "persistence"]
 
 [lints]
 workspace = true

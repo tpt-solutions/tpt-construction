@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Progress claims and payment applications: schedule of values, retention, approvals, certified amounts"
+readme = "README.md"
+categories = ["data-structures"]
+keywords = ["construction", "payapps", "invoicing", "retainage"]
 
 [lints]
 workspace = true

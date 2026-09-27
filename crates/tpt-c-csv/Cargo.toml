@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Tabular CSV import/export for estimates, cost databases, schedules, and field logs"
+readme = "README.md"
+categories = ["encoding", "parser-implementations"]
+keywords = ["csv", "construction", "estimating", "cost-database", "takeoff"]
 
 [dependencies]
 serde.workspace = true

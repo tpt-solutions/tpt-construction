@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Offline-first synchronization with CRDTs and deterministic conflict resolution for tpt-construction"
+readme = "README.md"
+categories = ["data-structures", "algorithms"]
+keywords = ["crdt", "sync", "offline", "construction", "convergence"]
 
 [lints]
 workspace = true

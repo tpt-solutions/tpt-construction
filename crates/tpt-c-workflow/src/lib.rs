@@ -12,7 +12,7 @@
 //!
 //! A [`Workflow`] ties a [`StateMachine`] to the routing metadata that makes an
 //! approval meaningful: who is assigned to each step, when it is due, and an
-//! append-only [`TransitionRecord`] history carrying [`AuditMeta`](tpt_c_core::AuditMeta).
+//! append-only transition history carrying `AuditMeta` records.
 
 mod routing;
 mod state_machine;
@@ -29,9 +29,9 @@ pub use workflows::{
 /// Alias for the generic workflow instance type.
 pub type Workflow<S> = WorkflowInstance<S>;
 
-/// Build a fresh [`RfiWorkflow`](workflows::RfiWorkflow) for a new request.
+/// Build a fresh [`RfiWorkflow`] for a new request.
 ///
-/// Generates a UUID-backed [`RfiId`](tpt_c_ids::RFIId) internally so callers
+/// Generates a UUID-backed RFI identifier internally so callers
 /// never deal with identifier plumbing.
 pub fn new_rfi() -> RfiWorkflow {
     workflows::RfiWorkflow::new()

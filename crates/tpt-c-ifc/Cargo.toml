@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "ISO-10303-21 (STEP) IFC parser mapping building elements to the neutral tpt-c-model"
+readme = "README.md"
+categories = ["parser-implementations", "api-bindings"]
+keywords = ["construction", "bim", "ifc", "step", "parser"]
 
 [dependencies]
 serde.workspace = true

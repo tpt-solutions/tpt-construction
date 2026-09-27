@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Geospatial coordinates: CRS, lat/long, local site grid, datums, transformations"
+readme = "README.md"
+categories = ["science", "data-structures"]
+keywords = ["construction", "geo", "gis", "coordinates", "crs"]
 
 [lints]
 workspace = true

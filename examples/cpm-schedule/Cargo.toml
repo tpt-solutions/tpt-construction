@@ -7,6 +7,9 @@ repository.workspace = true
 authors.workspace = true
 publish = false
 description = "Phase 4 integration example: run a sample CPM schedule and Monte Carlo risk analysis end-to-end"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "cpm", "scheduling", "risk"]
 
 [dependencies]
 tpt-c-core.workspace = true

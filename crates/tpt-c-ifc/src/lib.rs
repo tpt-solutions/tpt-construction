@@ -137,7 +137,6 @@ impl StepDoc {
 
 /// Parse an entire ISO-10303-21 document.
 pub fn parse(input: &str) -> Result<StepDoc, IfcError> {
-    eprintln!("PARSE START");
     let bytes: Vec<char> = input.chars().collect();
     let mut p = Parser { s: &bytes, pos: 0 };
     p.skip_ws();

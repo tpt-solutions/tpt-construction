@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Field execution records: daily logs, field reports, work records, manpower, weather, and site observations"
+readme = "README.md"
+categories = ["data-structures", "date-and-time"]
+keywords = ["construction", "field", "daily-log", "jobsite", "observations"]
 
 [lints]
 workspace = true

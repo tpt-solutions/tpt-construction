@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Domain events, event sourcing, projections and replay for tpt-construction"
+readme = "README.md"
+categories = ["data-structures", "rust-patterns"]
+keywords = ["construction", "events", "event-sourcing", "audit", "projections"]
 
 [lints]
 workspace = true

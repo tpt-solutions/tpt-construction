@@ -104,7 +104,7 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 - [x] Verify `cargo tree -i ryu`, `cargo tree -i zopfli`, `cargo tree -i csv`, and `cargo tree -i rust_xlsxwriter` all resolve to nothing; `cargo deny check licenses` still green; `tpt-c-wasm` builds for `wasm32-unknown-unknown`
 ### First Vertical Slice (spec §24)
 - [x] Build `examples/quantity-takeoff` and `examples/estimate-export`
-- [x] Implement CLI: `examples/tpt` ships an `estimate` subcommand (`tpt estimate model.json --cost-db rates.csv --output estimate.xlsx`); it consumes the neutral `tpt-c-model` JSON rather than a raw `.ifc` directly — IFC→JSON conversion goes through `tpt-c-ifc` separately, which is currently blocked by the Phase 2 parser bug above
+- [x] Implement CLI: `examples/tpt` ships an `estimate` subcommand (`tpt estimate model.json --cost-db rates.csv --output estimate.xlsx`); it consumes the neutral `tpt-c-model` JSON rather than a raw `.ifc` directly — IFC→JSON conversion goes through `tpt-c-ifc` (`examples/ifc-import` shows that path; an earlier note here claimed a Phase 2 parser bug, but no such bug existed)
 - [x] End-to-end test: IFC → elements → properties/quantities → classification → cost items → exported estimate (`crates/tpt-c-estimating/tests/e2e.rs`, 4 tests passing)
 - [x] Golden test-data validation (test-data/golden)
 
@@ -226,5 +226,22 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 ## Ongoing / Cross-Cutting
 - [x] Maintain cargo-deny license checks passing on every phase (spec §21)
 - [x] Keep CI green (fmt, clippy, test, deny) after each crate lands
-- [ ] Update Industry Coverage Map (spec §19) as crates land
-- [ ] Isolate any unavoidable Apache-only dependency behind an optional feature, documented per spec §4
+- [x] Update Industry Coverage Map (spec §19) as crates land — README map now lists every domain as covered (tpt-c-change real, las/dxf/db no longer caveated, tpt-c-api added to web tooling)
+- [x] Isolate any unavoidable Apache-only dependency behind an optional feature, documented per spec §4 — audit of the full 95-package graph (cargo deny licenses + `cargo metadata`): no Apache-only crates remain (`zmij`, via serde_json, is license-clean), so no feature isolation is needed; wasm-bindgen/web-sys were already optional behind `tpt-c-wasm`'s `js`/`web` features
+
+## Phase 10: Platform Review Follow-ups (2026-09-16)
+### Workspace / build integrity
+- [x] Register `tpt-c-las`, `tpt-c-dxf`, `tpt-c-equipment`, `tpt-c-sync`, `tpt-c-events`, `tpt-c-db` in `[workspace] members` (Cargo.toml) so `cargo test --workspace` actually covers them, or document per-crate why each stays excluded — registered; this surfaced real breakage: tpt-c-dxf never compiled (rewritten around a tokenized pair list), tpt-c-las had a classification-offset parser bug and a broken round-trip fixture (both fixed)
+- [x] Scaffold `crates/tpt-c-change` for real (it's referenced in `Cargo.toml` workspace.dependencies and the README's crate tables but doesn't exist on disk), or remove the dangling reference — scaffolded for real: `ChangeOrder` state machine, `ChangeRegister`, `RevisionDiff`/`QuantityDelta`/`CostDelta`, 13 tests (spec §12)
+- [x] Reconcile the Phase 3 "IFC→JSON conversion blocked by the Phase 2 parser bug" note (line 107) with the fact that Phase 2 is fully checked off with no documented bug — clarified: the claim was stale; the IFC parser works and `examples/ifc-import` demonstrates it; note removed along with the stale status text
+- [x] Implement `examples/earthwork-cut-fill` for real (currently a 7-line stub that only depends on `tpt-c-core`, despite `tpt-c-earthwork`/`tpt-c-alignment` being implemented) — implemented: corridor alignment + profile vs synthetic ground, mass haul with swell/shrink, cut/fill balance report
+- [x] Add a CI check that fails if a `crates/*` directory exists but isn't listed in `[workspace] members`, to prevent this drift recurring — `scripts/check-workspace-members.sh`, wired into CI (also catches listed-but-missing members)
+### Robustness
+- [x] Audit and reduce `.unwrap()`/`.expect()`/`panic!` usage in `tpt-c-schedule` (30), `tpt-c-xlsx` (18 + 1 panic!), `tpt-c-workflow` (18), `tpt-c-csv` (17), `tpt-c-equipment` (14) — convert to the `thiserror`-based Result pattern already standard in the rest of the workspace — audit result: all but 3 of the counted instances were inside `#[cfg(test)]` test code (idiomatic, kept); the 3 production instances fixed: CPM topological sort now uses the entry API, xlsx sheet-row handling is panic-free. Library code in all five crates is now unwrap-free
+- [x] Decide whether `tpt-c-alignment`'s own `Point2D`/`distance_to` should be consolidated with `tpt-c-geometry` primitives or documented as an intentionally distinct 2D/station type — decided: intentionally distinct; `tpt-c-geometry` models 3D space for meshes/clash, alignment is plan-view with `Length`-typed distances; documented in the crate's rustdoc and README
+### Adoption / usability
+- [x] Write a getting-started guide (smallest possible end-to-end flow: build a model → takeoff → estimate → export) — `docs/getting-started.md`
+- [x] Add a `templates/`/`cookbook/` folder of minimal, heavily-commented copy-paste recipes, distinct from the existing integration-test-style `examples/` — `cookbook/` with 11 recipes; every recipe is compile-verified in a scratch crate and its output checked against a real run
+- [x] Add a thin HTTP server binary/example (e.g. `tpt serve`, behind a feature flag) exposing takeoff/estimate/schedule via `tpt-c-api` models over HTTP — `tpt serve` behind the `serve` feature: hand-rolled HTTP/1.1 over `std::net` (zero new deps), bearer-token auth/scopes via `AuthToken`/`Permission`, `AuditLogEntry` logging, 5 HTTP integration tests
+- [x] Add CONTRIBUTING.md (dev commands, phase/crate conventions, source-header requirement) and CHANGELOG.md — both added at the root; every crate and example also carries its own CHANGELOG.md
+- [x] Add `cargo doc --workspace` as a CI check — rustdoc job with `RUSTDOCFLAGS="-D warnings"`

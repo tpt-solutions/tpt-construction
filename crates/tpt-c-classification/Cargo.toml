@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Construction classification systems (MasterFormat, UniFormat, OmniClass, Uniclass) and project mapping"
+readme = "README.md"
+categories = ["data-structures", "science"]
+keywords = ["construction", "bim", "classification", "masterformat", "uniformat"]
 
 [lints]
 workspace = true

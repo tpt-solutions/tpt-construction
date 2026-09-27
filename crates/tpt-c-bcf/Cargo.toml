@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "BIM Collaboration Format (BCF) topic model and XML (de)serialization"
+readme = "README.md"
+categories = ["parser-implementations", "encoding"]
+keywords = ["bim", "bcf", "construction", "coordination", "xml"]
 
 [lints]
 workspace = true

@@ -6,12 +6,13 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Earthwork volumes, shrink/swell, mass haul, and volume balancing for construction"
+readme = "README.md"
+categories = ["science", "algorithms"]
+keywords = ["construction", "earthwork", "mass-haul", "cut-fill", "earthmoving"]
 
 [lints]
 workspace = true
 
 [dependencies]
 serde.workspace = true
-tpt-c-geo.workspace = true
-tpt-c-geometry.workspace = true
 tpt-c-units.workspace = true

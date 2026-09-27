@@ -61,7 +61,9 @@ impl Sheet {
         if self.rows.is_empty() {
             self.rows.push(Row::new());
         }
-        self.rows.last_mut().unwrap().add_text_cell(text);
+        if let Some(row) = self.rows.last_mut() {
+            row.add_text_cell(text);
+        }
     }
 
     fn add_row(&mut self, row: Row) {
@@ -470,9 +472,8 @@ mod tests {
                 continue;
             }
             let mut reader = quick_xml::Reader::from_str(&s);
-            let mut unescape_buf = Vec::new();
             loop {
-                match reader.read_event(&mut unescape_buf) {
+                match reader.read_event() {
                     Ok(quick_xml::events::Event::Eof) => break,
                     Ok(_) => {}
                     Err(e) => panic!("XML not well-formed in {}: {:?}", entry.name(), e),

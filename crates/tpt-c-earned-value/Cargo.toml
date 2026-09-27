@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Earned Value Management (EVM): PV/EV/AC, SPI, CPI, TCPI, EAC, ETC, VAC for construction projects"
+readme = "README.md"
+categories = ["value-formatting", "algorithms"]
+keywords = ["evm", "earned-value", "construction", "cpi", "spi"]
 
 [dependencies]
 serde.workspace = true

@@ -14,7 +14,7 @@
 //! confidence level.
 //!
 //! The crate is self-contained: it vendors a small PCG64 generator and the
-//! probability distributions it needs (see [`prob`]) rather than depending on
+//! probability distributions it needs (a vendored `prob` module) rather than depending on
 //! the optional `tpt-math-prob-dist` substrate (spec §4).
 
 mod model;

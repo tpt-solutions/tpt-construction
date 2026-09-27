@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Construction scheduling: activities, relationships (FS/SS/FF/SF), calendars, constraints, CPM engine, float, baselines, and actuals"
+readme = "README.md"
+categories = ["algorithms", "date-and-time"]
+keywords = ["construction", "cpm", "scheduling", "critical-path", "float"]
 
 [dependencies]
 serde.workspace = true

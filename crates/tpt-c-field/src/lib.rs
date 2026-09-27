@@ -7,7 +7,7 @@
 //! that shaped it, the [`ManpowerRecord`] that performed the work, free-form
 //! [`WorkRecord`] entries, and [`SiteObservation`]s (safety / quality /
 //! environmental). A daily log can link the RFIs it spawned via
-//! [`RFIId`](tpt_c_ids::RFIId), tying field capture to the approval workflow.
+//! `RFIId`s, tying field capture to the approval workflow.
 
 use std::fmt;
 use std::str::FromStr;

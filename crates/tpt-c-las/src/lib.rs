@@ -104,12 +104,18 @@ impl<'a> Reader<'a> {
         Ok(v)
     }
     fn u16(&mut self) -> Result<u16> {
-        let s = self.b.get(self.pos..self.pos + 2).ok_or(LasError::Truncated)?;
+        let s = self
+            .b
+            .get(self.pos..self.pos + 2)
+            .ok_or(LasError::Truncated)?;
         self.pos += 2;
         Ok(u16::from_le_bytes([s[0], s[1]]))
     }
     fn u32(&mut self) -> Result<u32> {
-        let s = self.b.get(self.pos..self.pos + 4).ok_or(LasError::Truncated)?;
+        let s = self
+            .b
+            .get(self.pos..self.pos + 4)
+            .ok_or(LasError::Truncated)?;
         self.pos += 4;
         Ok(u32::from_le_bytes([s[0], s[1], s[2], s[3]]))
     }
@@ -117,7 +123,10 @@ impl<'a> Reader<'a> {
         Ok(self.u32()? as i32)
     }
     fn f64(&mut self) -> Result<f64> {
-        let s = self.b.get(self.pos..self.pos + 8).ok_or(LasError::Truncated)?;
+        let s = self
+            .b
+            .get(self.pos..self.pos + 8)
+            .ok_or(LasError::Truncated)?;
         self.pos += 8;
         let mut a = [0u8; 8];
         a.copy_from_slice(s);
@@ -145,7 +154,7 @@ pub fn read_las(data: &[u8]) -> Result<(LasHeader, Vec<LasPoint>)> {
     let version_minor = r.u8()?;
     r.skip(32 + 32)?; // system id, generating software
     r.skip(2 + 2)?; // creation date
-    let header_size = r.u16()?;
+    let _header_size = r.u16()?; // kept for stream alignment; points are located via offset_to_points
     let offset_to_points = r.u32()?;
     r.skip(4)?; // number of var length records
     let point_format = r.u8()?;
@@ -193,10 +202,10 @@ pub fn read_las(data: &[u8]) -> Result<(LasHeader, Vec<LasPoint>)> {
         let bits = pr.u8()?;
         let return_number = bits & 0x07;
         let number_of_returns = (bits >> 3) & 0x07;
-        pr.skip(1 + 1)?; // scan direction flag, edge
+        // Classification follows immediately; scan direction and edge-of-flight
+        // are bits 6-7 of the same byte. The remaining record bytes (scan angle
+        // rank, user data, point source id) are skipped via record_len strides.
         let classification = pr.u8()?;
-        // Skip remaining format fields up to record_len.
-        pr.pos = p + record_len;
         points.push(LasPoint {
             x: xi as f64 * scale[0] + offset[0],
             y: yi as f64 * scale[1] + offset[1],
@@ -245,8 +254,8 @@ mod tests {
         b.extend_from_slice(&[0u8; 32]); // software
         b.extend_from_slice(&0u16.to_le_bytes()); // creation day
         b.extend_from_slice(&0u16.to_le_bytes()); // creation year
-        b.extend_from_slice(&375u16.to_le_bytes()); // header size
-        b.extend_from_slice(&375u32.to_le_bytes()); // offset to points
+        b.extend_from_slice(&227u16.to_le_bytes()); // header size (4 + 223 field bytes)
+        b.extend_from_slice(&227u32.to_le_bytes()); // offset to points = end of this 227-byte header
         b.extend_from_slice(&0u32.to_le_bytes()); // var length records
         b.push(0); // point format
         b.extend_from_slice(&20u16.to_le_bytes()); // record length
@@ -269,19 +278,21 @@ mod tests {
             b.extend_from_slice(&v.to_le_bytes());
         }
         b.extend_from_slice(&0u16.to_le_bytes()); // intensity
-        b.push(0b0000_1001); // return number 1, returns 1
-        b.push(0); // scan dir
-        b.push(0); // edge
+        b.push(0b0000_1001); // return number 1, returns 1 (scan dir / edge in bits 6-7)
         b.push(classification::GROUND); // classification
-        // Point 1: x=200 (=>2.0), y=300 (=>3.0), z=400 (=>4.0)
+        b.push(0); // scan angle rank
+        b.push(0); // user data
+        b.extend_from_slice(&0u16.to_le_bytes()); // point source id
+                                                  // Point 1: x=200 (=>2.0), y=300 (=>3.0), z=400 (=>4.0)
         for v in [200i32, 300, 400] {
             b.extend_from_slice(&v.to_le_bytes());
         }
         b.extend_from_slice(&0u16.to_le_bytes());
         b.push(0b0000_1001);
-        b.push(0);
-        b.push(0);
         b.push(classification::BUILDING);
+        b.push(0); // scan angle rank
+        b.push(0); // user data
+        b.extend_from_slice(&0u16.to_le_bytes()); // point source id
         b
     }
 

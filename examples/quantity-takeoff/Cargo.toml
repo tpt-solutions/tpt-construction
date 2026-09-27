@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Run a quantity takeoff over a neutral model and print a summary"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "takeoff", "quantities"]
 publish = false
 
 [dependencies]

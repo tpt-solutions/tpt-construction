@@ -65,7 +65,9 @@ dependencies = [
 name = "earthwork-cut-fill"
 version = "0.1.0"
 dependencies = [
- "tpt-c-core",
+ "tpt-c-alignment",
+ "tpt-c-earthwork",
+ "tpt-c-units",
 ]
 
 [[package]]
@@ -257,9 +259,9 @@ dependencies = [
 
 [[package]]
 name = "quick-xml"
-version = "0.22.0"
+version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8533f14c8382aaad0d592c812ac3b826162128b65662331e1127b45c3d18536b"
+checksum = "41b1177fdf999d2321d3fb46ff47159d9c1fb9ad66a4879f8c50a0b504615e9b"
 dependencies = [
  "memchr",
 ]
@@ -404,13 +406,17 @@ name = "tpt"
 version = "0.1.0"
 dependencies = [
  "serde_json",
+ "tpt-c-api",
  "tpt-c-core",
  "tpt-c-cost",
  "tpt-c-csv",
  "tpt-c-estimating",
  "tpt-c-model",
  "tpt-c-quantities",
+ "tpt-c-schedule",
+ "tpt-c-units",
  "tpt-c-xlsx",
+ "uuid",
 ]
 
 [[package]]
@@ -418,8 +424,6 @@ name = "tpt-c-alignment"
 version = "0.1.0"
 dependencies = [
  "serde",
- "tpt-c-geo",
- "tpt-c-geometry",
  "tpt-c-units",
 ]
 
@@ -449,6 +453,18 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "thiserror",
+]
+
+[[package]]
+name = "tpt-c-change"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror",
+ "tpt-c-core",
+ "tpt-c-cost",
+ "tpt-c-ids",
+ "uuid",
 ]
 
 [[package]]
@@ -506,6 +522,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tpt-c-db"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "tpt-c-documents"
 version = "0.1.0"
 dependencies = [
@@ -515,6 +540,13 @@ dependencies = [
  "tpt-c-ids",
  "tpt-c-workflow",
  "uuid",
+]
+
+[[package]]
+name = "tpt-c-dxf"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]
@@ -531,8 +563,6 @@ name = "tpt-c-earthwork"
 version = "0.1.0"
 dependencies = [
  "serde",
- "tpt-c-geo",
- "tpt-c-geometry",
  "tpt-c-units",
 ]
 
@@ -647,6 +677,13 @@ dependencies = [
  "tpt-c-ids",
  "tpt-c-model",
  "tpt-c-units",
+]
+
+[[package]]
+name = "tpt-c-las"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
 ]
 
 [[package]]
@@ -803,9 +840,7 @@ dependencies = [
  "quick-xml",
  "serde",
  "thiserror",
- "tpt-c-core",
  "tpt-c-cost",
- "tpt-c-estimating",
  "tpt-c-model",
  "tpt-c-units",
  "zip",

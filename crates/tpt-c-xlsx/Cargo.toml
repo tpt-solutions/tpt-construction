@@ -6,20 +6,21 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Excel (xlsx) export for estimates, owner reports, and bid summaries"
+readme = "README.md"
+categories = ["encoding"]
+keywords = ["xlsx", "excel", "construction", "estimating", "spreadsheet"]
 
 [dependencies]
 zip = { workspace = true }
 flate2 = { workspace = true }
 serde.workspace = true
 thiserror.workspace = true
-tpt-c-core.workspace = true
 tpt-c-cost.workspace = true
-tpt-c-estimating.workspace = true
 tpt-c-model.workspace = true
-tpt-c-units.workspace = true
 
 [dev-dependencies]
 quick-xml = { workspace = true }
+tpt-c-units.workspace = true
 
 [lints]
 workspace = true

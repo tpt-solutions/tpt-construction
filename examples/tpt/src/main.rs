@@ -3,17 +3,23 @@
 
 //! `tpt` — the TPT Construction command-line interface.
 //!
-//! Currently supports the `estimate` subcommand:
+//! Subcommands:
 //!
 //! ```text
 //! tpt estimate <model.json> --cost-db <rates.csv> --output <estimate.xlsx>
+//! tpt serve [--addr <addr>] [--token <secret>]   (build with --features serve)
 //! ```
 //!
 //! The model is the neutral `tpt-c-model` JSON (produced by `tpt-c-ifc` and
 //! other parsers). Cost rates come from a CSV cost database. The result is a
-//! priced estimate written to `.xlsx`.
+//! priced estimate written to `.xlsx`. The `serve` subcommand exposes the
+//! takeoff, estimate, and CPM scheduling engines over a thin dependency-free
+//! HTTP interface (see `src/serve.rs`).
 
 use std::process::ExitCode;
+
+#[cfg(feature = "serve")]
+mod serve;
 
 use tpt_c_cost::CostDatabase;
 use tpt_c_estimating::EstimateBuilder;
@@ -26,6 +32,8 @@ fn main() -> ExitCode {
     }
     match args[0].as_str() {
         "estimate" => estimate(&args[1..]),
+        #[cfg(feature = "serve")]
+        "serve" => serve::run_cli(&args[1..]),
         "help" | "--help" | "-h" => usage(),
         other => {
             eprintln!("unknown subcommand: {other}");
@@ -37,6 +45,7 @@ fn main() -> ExitCode {
 fn usage() -> ExitCode {
     eprintln!("tpt — TPT Construction CLI");
     eprintln!("  tpt estimate <model.json> --cost-db <rates.csv> --output <estimate.xlsx>");
+    eprintln!("  tpt serve [--addr <addr>] [--token <secret>]   (build with --features serve)");
     ExitCode::FAILURE
 }
 

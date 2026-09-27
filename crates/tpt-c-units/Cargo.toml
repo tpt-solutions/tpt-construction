@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Construction measurement units, conversions, waste factors and domain measure helpers"
+readme = "README.md"
+categories = ["value-formatting", "science"]
+keywords = ["construction", "units", "estimating", "measurement", "conversion"]
 
 [lints]
 workspace = true

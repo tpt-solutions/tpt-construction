@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Document control: documents, drawings, specifications, revisions, transmittals"
+readme = "README.md"
+categories = ["data-structures"]
+keywords = ["construction", "documents", "transmittal", "drawings", "revisions"]
 
 [lints]
 workspace = true

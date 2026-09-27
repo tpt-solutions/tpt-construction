@@ -15,8 +15,8 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::hash::Hash;
 use std::fs;
+use std::hash::Hash;
 use std::path::Path;
 use thiserror::Error;
 
@@ -315,7 +315,11 @@ impl MigrationRegistry {
 
     /// Register a migration, rejecting duplicate versions.
     pub fn register(&mut self, migration: Migration) -> Result<(), DbError> {
-        if self.migrations.iter().any(|m| m.version == migration.version) {
+        if self
+            .migrations
+            .iter()
+            .any(|m| m.version == migration.version)
+        {
             return Err(DbError::DuplicateMigration(migration.version));
         }
         self.migrations.push(migration);
@@ -372,11 +376,10 @@ impl Migrator {
         let pending = self.registry.pending(&self.applied);
         let mut applied_now = Vec::new();
         for m in pending {
-            (m.up)(self.target.as_mut())
-                .map_err(|e| DbError::MigrationFailed {
-                    name: m.name.clone(),
-                    detail: e.to_string(),
-                })?;
+            (m.up)(self.target.as_mut()).map_err(|e| DbError::MigrationFailed {
+                name: m.name.clone(),
+                detail: e.to_string(),
+            })?;
             self.applied.mark(m.version);
             applied_now.push(m.version);
         }
@@ -417,7 +420,8 @@ mod tests {
         let path = dir.join("repo.json");
         let _ = fs::remove_file(&path);
         {
-            let mut repo: JsonFileRepository<String, u32> = JsonFileRepository::open(&path).unwrap();
+            let mut repo: JsonFileRepository<String, u32> =
+                JsonFileRepository::open(&path).unwrap();
             repo.insert("k".into(), 99);
         }
         // Reopen and confirm durability.
@@ -485,6 +489,8 @@ mod tests {
         let mut reg = MigrationRegistry::new();
         reg.register(Migration::new(1, "a", "", Box::new(|_| Ok(()))))
             .unwrap();
-        assert!(reg.register(Migration::new(1, "b", "", Box::new(|_| Ok(())))).is_err());
+        assert!(reg
+            .register(Migration::new(1, "b", "", Box::new(|_| Ok(()))))
+            .is_err());
     }
 }

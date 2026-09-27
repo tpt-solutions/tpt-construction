@@ -4,8 +4,9 @@
 //! Minimal ASCII DXF (Drawing eXchange Format) reader for 2D/3D entities.
 //!
 //! Parses the group-code/value structure and extracts common entities
-//! (LINE, LWPOLYLINE, CIRCLE, POINT, TEXT). Geometry can be lifted into
-//! [`tpt_c_geometry`] primitives for takeoff and clash work.
+//! (LINE, LWPOLYLINE, CIRCLE, POINT, TEXT). Extracted geometry is plain
+//! coordinate arrays, ready to be lifted into mesh primitives for takeoff
+//! and clash work.
 
 use thiserror::Error;
 
@@ -69,7 +70,7 @@ pub enum DxfEntity {
 }
 
 /// A parsed DXF document.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct DxfDocument {
     /// Entities found in the ENTITIES section.
     pub entities: Vec<DxfEntity>,
@@ -78,46 +79,47 @@ pub struct DxfDocument {
 impl DxfDocument {
     /// Parse a DXF document from text.
     pub fn parse(input: &str) -> Result<Self> {
+        let pairs = tokenize(input)?;
         let mut entities = Vec::new();
         let mut in_entities = false;
-        let mut tokens = input.lines().map(str::trim).peekable();
-
-        while let Some(code_line) = tokens.next() {
-            let code: i32 = code_line.parse().map_err(|_| DxfError::BadGroupCode)?;
-            let value = tokens.next().ok_or(DxfError::UnexpectedEof)?.to_string();
-            if code == 0 && value.eq_ignore_ascii_case("SECTION") {
-                // Look ahead for the section name (group 2).
-                if let (Some(&c2), Some(v2)) = (tokens.peek().copied(), tokens.peek().map(|_| tokens.next().unwrap().to_string())) {
-                    if c2 == 2 && v2.eq_ignore_ascii_case("ENTITIES") {
-                        let _ = tokens.next(); // consume the group-2 line (already taken)
+        let mut seen_entities_section = false;
+        let mut i = 0;
+        while i < pairs.len() {
+            let (code, value) = &pairs[i];
+            if *code == 0 && value.eq_ignore_ascii_case("SECTION") {
+                // The section name follows as a group-2 pair.
+                if let Some((2, name)) = pairs.get(i + 1) {
+                    if name.eq_ignore_ascii_case("ENTITIES") {
                         in_entities = true;
+                        seen_entities_section = true;
+                        i += 2;
+                        continue;
                     }
                 }
+                i += 1;
                 continue;
             }
-            if in_entities && code == 0 {
+            if in_entities && *code == 0 {
                 if value.eq_ignore_ascii_case("ENDSEC") {
                     in_entities = false;
+                    i += 1;
                     continue;
                 }
-                // Parse an entity: read its following groups until the next 0 group.
-                let mut props: Vec<(i32, String)> = Vec::new();
-                while let Some(&c) = tokens.peek() {
-                    if c == 0 {
-                        break;
-                    }
-                    let c = tokens.next().unwrap().parse().map_err(|_| DxfError::BadGroupCode)?;
-                    let v = tokens.next().ok_or(DxfError::UnexpectedEof)?.to_string();
-                    props.push((c, v));
+                // Gather the entity's groups up to the next group-0 pair.
+                let mut j = i + 1;
+                while j < pairs.len() && pairs[j].0 != 0 {
+                    j += 1;
                 }
-                if let Some(e) = build_entity(&value, &props) {
+                if let Some(e) = build_entity(value, &pairs[i + 1..j]) {
                     entities.push(e);
                 }
+                i = j;
+                continue;
             }
+            i += 1;
         }
 
-        if entities.is_empty() && !in_entities {
-            // Allow documents that only list entities without a section marker.
+        if !seen_entities_section {
             return Err(DxfError::NoEntities);
         }
         Ok(Self { entities })
@@ -169,6 +171,18 @@ impl DxfDocument {
     }
 }
 
+/// Split DXF text into `(group code, value)` pairs, one per code/value line.
+fn tokenize(input: &str) -> Result<Vec<(i32, String)>> {
+    let mut lines = input.lines().map(str::trim).filter(|l| !l.is_empty());
+    let mut pairs = Vec::new();
+    while let Some(code_line) = lines.next() {
+        let code: i32 = code_line.parse().map_err(|_| DxfError::BadGroupCode)?;
+        let value = lines.next().ok_or(DxfError::UnexpectedEof)?.to_string();
+        pairs.push((code, value));
+    }
+    Ok(pairs)
+}
+
 fn get_f(props: &[(i32, String)], code: i32) -> Option<f64> {
     props
         .iter()
@@ -191,35 +205,28 @@ fn build_entity(name: &str, props: &[(i32, String)]) -> Option<DxfEntity> {
             ],
         }),
         "LWPOLYLINE" => {
-            let count = get_f(props, 90)? as usize;
             let mut points = Vec::new();
             let mut closed = false;
-            let mut i = 0usize;
-            let mut piter = props.iter().peekable();
-            while let Some(&(c, _)) = piter.peek() {
-                if *c == 0 {
-                    break;
-                }
-                let (c, v) = piter.next().unwrap();
-                if c == 10 {
-                    let x = v.parse::<f64>().ok()?;
-                    // consume following 20 (y)
-                    if let Some(&(20, ref yv)) = piter.peek() {
-                        let _ = piter.next();
-                        let y = yv.parse::<f64>().ok()?;
+            let mut idx = 0;
+            while idx < props.len() {
+                let (c, v) = &props[idx];
+                match *c {
+                    10 => {
+                        let x = v.parse::<f64>().unwrap_or(0.0);
+                        // The matching y follows as a group-20 pair.
+                        let y = match props.get(idx + 1) {
+                            Some((20, yv)) => {
+                                idx += 1;
+                                yv.parse::<f64>().unwrap_or(0.0)
+                            }
+                            _ => 0.0,
+                        };
                         points.push([x, y]);
-                    } else {
-                        points.push([x, 0.0]);
                     }
-                    i += 1;
-                } else if c == 70 {
-                    closed = v.parse::<i32>().map(|v| v & 1 == 1).unwrap_or(false);
-                } else {
-                    let _ = v;
+                    70 => closed = v.parse::<i32>().map(|f| f & 1 == 1).unwrap_or(false),
+                    _ => {}
                 }
-            }
-            if points.len() != count {
-                // Be lenient: keep what we parsed.
+                idx += 1;
             }
             Some(DxfEntity::LwPolyline { points, closed })
         }
@@ -299,6 +306,50 @@ EOF
         let segs = doc.segments();
         // 1 line + 24 circle segments.
         assert_eq!(segs.len(), 25);
-        assert_eq!(doc.entities[0], DxfEntity::Line { start: [0.0,0.0,0.0], end: [10.0,0.0,0.0] });
+        assert_eq!(
+            doc.entities[0],
+            DxfEntity::Line {
+                start: [0.0, 0.0, 0.0],
+                end: [10.0, 0.0, 0.0]
+            }
+        );
+    }
+
+    #[test]
+    fn parse_polyline_text_and_point() {
+        let src = "0\nSECTION\n2\nENTITIES\n0\nLWPOLYLINE\n90\n3\n70\n1\n10\n0.0\n20\n0.0\n\
+                   10\n4.0\n20\n0.0\n10\n4.0\n20\n3.0\n0\nTEXT\n1\nGrid A\n10\n1.0\n20\n2.0\n\
+                   0\nPOINT\n10\n7.0\n20\n8.0\n30\n1.5\n0\nENDSEC\n0\nEOF\n";
+        let doc = DxfDocument::parse(src).unwrap();
+        assert_eq!(doc.len(), 3);
+        assert_eq!(
+            doc.entities[0],
+            DxfEntity::LwPolyline {
+                points: vec![[0.0, 0.0], [4.0, 0.0], [4.0, 3.0]],
+                closed: true,
+            }
+        );
+        match &doc.entities[1] {
+            DxfEntity::Text { p, text } => {
+                assert_eq!(*p, [1.0, 2.0, 0.0]);
+                assert_eq!(text, "Grid A");
+            }
+            other => panic!("expected text, got {other:?}"),
+        }
+        // Closed 3-vertex polyline yields 3 segments (2 edges + closing edge).
+        let segs = doc.segments();
+        assert_eq!(segs.len(), 3);
+    }
+
+    #[test]
+    fn missing_entities_section_is_an_error() {
+        let src = "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n0\nENDSEC\n0\nEOF\n";
+        assert_eq!(DxfDocument::parse(src), Err(DxfError::NoEntities));
+    }
+
+    #[test]
+    fn odd_number_of_lines_is_eof() {
+        assert_eq!(DxfDocument::parse("0\n"), Err(DxfError::UnexpectedEof));
+        assert_eq!(DxfDocument::parse("zzz\n1\n"), Err(DxfError::BadGroupCode));
     }
 }

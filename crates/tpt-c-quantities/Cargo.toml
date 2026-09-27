@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Quantity takeoff engine: count/length/area/volume/weight, net vs gross, waste factors, manual overrides, and a derived rule set"
+readme = "README.md"
+categories = ["science", "data-structures"]
+keywords = ["construction", "estimating", "takeoff", "quantities", "bim"]
 
 [dependencies]
 serde.workspace = true

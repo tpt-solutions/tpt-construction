@@ -3,8 +3,8 @@
 
 //! Construction estimating: turning a takeoff into a priced estimate.
 //!
-//! The central type is [`EstimateBuilder`], which consumes a [`TakeoffResult`]
-//! (from `tpt-c-quantities`) and a [`CostDatabase`] (from `tpt-c-cost`), prices
+//! The central type is [`EstimateBuilder`], which consumes a `TakeoffResult`
+//! (from `tpt-c-quantities`) and a `CostDatabase` (from `tpt-c-cost`), prices
 //! each measured quantity by its cost code, and assembles an [`Estimate`]. This
 //! crate also provides bid preparation, estimate revisions, comparison, and a
 //! simple cost-plan rollup by code.

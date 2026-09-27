@@ -7,6 +7,14 @@
 //! Provides types for horizontal alignments (tangents, circular curves,
 //! spirals), vertical alignments (grades, parabolic vertical curves),
 //! stationing along a baseline, and superelevation runoff.
+//!
+//! # Why a local `Point2D`
+//!
+//! The `tpt-c-geometry` crate models 3D space (`Point3`/`Vec3`) for meshes,
+//! solids, and clash detection. Alignment work is plan-view: a 2D point whose
+//! distances are typed as a [`Length`] and tied to station equations. This
+//! crate therefore defines its own small `Point2D` instead of reusing the 3D
+//! primitives — the types are intentionally distinct, not an oversight.
 
 use serde::{Deserialize, Serialize};
 use tpt_c_units::Length;

@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "Spaces, occupancy, leases, areas, space planning, space utilization"
+readme = "README.md"
+categories = ["data-structures"]
+keywords = ["construction", "spaces", "occupancy", "leases", "fm"]
 
 [lints]
 workspace = true

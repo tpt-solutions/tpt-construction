@@ -7,6 +7,9 @@ repository.workspace = true
 authors.workspace = true
 publish = false
 description = "Phase 2 integration example: parse a sample IFC into the neutral tpt-c-model"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "ifc", "bim"]
 
 [dependencies]
 tpt-c-ifc.workspace = true

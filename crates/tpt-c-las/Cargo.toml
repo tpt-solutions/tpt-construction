@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 authors.workspace = true
 description = "LAS/LAZ point-cloud parsing, classification and volume estimation"
+readme = "README.md"
+categories = ["parser-implementations", "science"]
+keywords = ["las", "pointcloud", "lidar", "survey", "construction"]
 
 [lints]
 workspace = true

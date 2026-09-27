@@ -8,7 +8,7 @@
 //! [`NoticeWorkflow`](tpt_c_workflow::NoticeWorkflow)), [`Claim`]s, and
 //! [`ComplianceEvent`]s. Amounts are kept as `(f64, currency)` pairs so the
 //! crate stays free of the cost-model dependency; partner crates can map these
-//! onto [`tpt_c_cost::Money`] when pricing.
+//! onto `Money` amounts when pricing.
 
 use serde::{Deserialize, Serialize};
 use thiserror::Error;

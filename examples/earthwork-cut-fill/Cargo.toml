@@ -5,11 +5,16 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 authors.workspace = true
-description = "Run an earthwork cut/fill analysis end-to-end"
+description = "Run an earthwork cut/fill analysis over an alignment end-to-end"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools"]
+keywords = ["construction", "earthwork", "alignment"]
 publish = false
 
 [dependencies]
-tpt-c-core.workspace = true
+tpt-c-alignment.workspace = true
+tpt-c-earthwork.workspace = true
+tpt-c-units.workspace = true
 
 [lints]
 workspace = true
