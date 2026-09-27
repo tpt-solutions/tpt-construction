@@ -61,7 +61,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: EmbarkStudios/cargo-deny-action@v1
+      - uses: actions/cache@v4
         with:
-          command: check
-          arguments: --all-features
+          path: ~/.cargo/bin/cargo-deny
+          key: ${{ runner.os }}-cargo-deny-bin-v1
+      - run: command -v cargo-deny || cargo install cargo-deny --locked
+      - run: cargo deny check --all-features
