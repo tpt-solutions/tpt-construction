@@ -245,3 +245,28 @@ Dual-licensed MIT OR Apache-2.0 · TPT Solutions
 - [x] Add a thin HTTP server binary/example (e.g. `tpt serve`, behind a feature flag) exposing takeoff/estimate/schedule via `tpt-c-api` models over HTTP — `tpt serve` behind the `serve` feature: hand-rolled HTTP/1.1 over `std::net` (zero new deps), bearer-token auth/scopes via `AuthToken`/`Permission`, `AuditLogEntry` logging, 5 HTTP integration tests
 - [x] Add CONTRIBUTING.md (dev commands, phase/crate conventions, source-header requirement) and CHANGELOG.md — both added at the root; every crate and example also carries its own CHANGELOG.md
 - [x] Add `cargo doc --workspace` as a CI check — rustdoc job with `RUSTDOCFLAGS="-D warnings"`
+
+## Phase 11: Platform Review Follow-ups (2026-09-27)
+### Bugs / correctness
+- [ ] Fix `tpt-c-gltf::to_json()` (`crates/tpt-c-gltf/src/lib.rs:332`) to return a `Result` instead of `.expect()`-panicking on non-finite (NaN/Infinity) vertex/accessor floats
+- [ ] Migrate `tpt-c-cost::Money` (`crates/tpt-c-cost/src/money.rs:16-21`) off raw `f64` to a fixed-point/integer-cents (or decimal crate) representation before the API stabilizes further
+- [ ] Remove the unused `tpt-c-csv` dependency from `crates/tpt-c-estimating/Cargo.toml` (manifest-level violation of "domain engines never depend on file formats"; no code actually uses it)
+- [ ] Make `crates/tpt-c-estimating/tests/e2e.rs`'s `golden_rates()` read `test-data/golden/rates.csv` directly instead of hardcoding matching values, so the fixture and test can't silently drift apart
+- [ ] Add a test that actually exercises/validates `test-data/golden/estimate.xlsx` (currently an unread static sample output)
+- [ ] Add `clippy.toml` `disallowed-methods`/`disallowed-types` entries to mechanically enforce "no unwrap/expect in lib code" and "no f64 for money" going forward
+- [ ] Document (in AGENTS.md/CONTRIBUTING.md) that SPDX header enforcement runs in a separate `.github/workflows/license.yml`, not inside `ci.yml`
+- [ ] Raise test coverage in the thinnest crates (≤2 `#[test]` fns): `tpt-c-assets`, `tpt-c-maintenance`, `tpt-c-model`, `tpt-c-space`, `tpt-c-twin`, `tpt-c-fm`, `tpt-c-geo`, `tpt-c-gltf`, `tpt-c-las`, `tpt-c-wasm` — prioritize the format-parser crates (`tpt-c-ifc`, `tpt-c-bcf`, `tpt-c-dxf`) given malformed-external-input risk
+
+### Architecture
+- [ ] Decide `tpt-c-events`'s status: either wire it into at least one domain crate (e.g. `tpt-c-change` or `tpt-c-workflow`) as a proof of the "event-first auditability" pattern, or update AGENTS.md/README to stop describing it as a current property
+- [ ] Decide and document whether `tpt-c-api`/`tpt-c-db` are meant to grow real HTTP/DB backends or stay intentionally as pluggable trait scaffolding
+- [ ] Expand `tpt-c-wasm`'s `#[wasm_bindgen]` surface to match its stated scope (currently only `parse_ifc` is JS-callable; takeoff/CPM/geometry/glTF export are Rust-only re-exports) — or narrow the Cargo.toml description to match reality
+- [ ] Remove or wire up the unused `web` feature flag in `tpt-c-wasm/Cargo.toml` (currently a dead alias for `js`)
+- [ ] Consider new crates for missing domain areas: `tpt-c-subcontractors` (prequalification, insurance tracking, sub-tier pay apps) and `tpt-c-procurement` (purchase orders, vendor/supplier management) — no existing crate needs reshaping to add these
+- [ ] Upgrade `tpt-c-geometry::detect_clashes` from AABB bounding-box overlap to real mesh/solid-level intersection, with a clash-issue lifecycle tied into `tpt-c-workflow`
+
+### Adoption / usability
+- [ ] Add a crate-scaffolding tool (`cargo-generate` template or `scripts/new-crate.sh`) that generates a new `tpt-c-*` crate with SPDX header, Cargo.toml boilerplate, README/CHANGELOG shape, and workspace-members wiring in one step
+- [ ] Fill cookbook gaps with recipes for: BIM/format crates (IFC/BCF/DXF/LAS/glTF), civil crates (earthwork/alignment), classification (MasterFormat/UniFormat/OmniClass/Uniclass), and facility-management crates (assets/maintenance/space/fm/twin)
+- [ ] Add an `examples/starter/` scaffold — a minimal runnable project (model + takeoff + estimate + one format import) meant to be cloned/renamed as a base for a real integration, distinct from the single-purpose demo examples
+- [ ] Improve the `tpt` CLI's own `--help` output so a user with only the compiled binary (no repo clone) gets meaningful guidance, not just the current 2-line usage string
